@@ -813,7 +813,23 @@ if run:
         
         # 추천된 광고들의 피처 벡터
         rec_ads_idx = rec["광고인덱스"].values
-        rec_ads_features = A[rec_ads_idx]
+        
+        # ads_idx를 A 배열의 인덱스로 변환
+        rec_ads_indices = []
+        for ads_idx in rec_ads_idx:
+            # ads_meta에서 해당 ads_idx의 행 인덱스 찾기
+            ad_row_idx = ads_meta[ads_meta['ads_idx'] == ads_idx].index
+            if len(ad_row_idx) > 0:
+                rec_ads_indices.append(ad_row_idx[0])
+            else:
+                st.warning(f"광고 인덱스 {ads_idx}를 찾을 수 없습니다.")
+                continue
+        
+        if rec_ads_indices:
+            rec_ads_features = A[rec_ads_indices]
+        else:
+            st.error("추천된 광고의 피처를 찾을 수 없습니다.")
+            return
         
         # 사용자 선호도와 각 추천 광고의 유사도 계산
         similarities = (user_vector @ rec_ads_features.T).flatten()
