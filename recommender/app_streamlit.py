@@ -453,10 +453,34 @@ with col3:
         key="interactions_upload"
     )
 
-# 기본 파일 경로 설정
-ads_file_path = "ads_profile.zip" if ads_file is None else ads_file
-users_file_path = "user_profile.zip" if users_file is None else users_file
-interactions_file_path = "correct_interactions.zip" if interactions_file is None else interactions_file
+# 기본 파일 경로 설정 (Streamlit Cloud 호환성)
+if ads_file is None:
+    # Streamlit Cloud에서 기본 파일이 있는지 확인
+    if os.path.exists("ads_profile.zip"):
+        ads_file_path = "ads_profile.zip"
+    else:
+        st.error("❌ ads_profile.zip 파일을 찾을 수 없습니다. 파일을 업로드해주세요.")
+        st.stop()
+else:
+    ads_file_path = ads_file
+
+if users_file is None:
+    if os.path.exists("user_profile.zip"):
+        users_file_path = "user_profile.zip"
+    else:
+        st.error("❌ user_profile.zip 파일을 찾을 수 없습니다. 파일을 업로드해주세요.")
+        st.stop()
+else:
+    users_file_path = users_file
+
+if interactions_file is None:
+    if os.path.exists("correct_interactions.zip"):
+        interactions_file_path = "correct_interactions.zip"
+    else:
+        st.error("❌ correct_interactions.zip 파일을 찾을 수 없습니다. 파일을 업로드해주세요.")
+        st.stop()
+else:
+    interactions_file_path = interactions_file
 
 st.divider()
 
@@ -470,8 +494,16 @@ try:
         user_interactions = load_interactions_from_user_profile(users_file_path)
         actual_interactions = load_actual_interactions(interactions_file_path)
         detailed_interactions = load_detailed_user_interactions(users_file_path)
+    
+    # 데이터 로딩 성공 메시지
+    st.success("✅ 모든 데이터가 성공적으로 로드되었습니다!")
+    
 except Exception as e:
-    st.error(f"데이터 로딩 오류: {e}")
+    st.error(f"❌ 데이터 로딩 오류: {e}")
+    st.error("💡 해결 방법:")
+    st.error("1. 파일이 올바른 형식인지 확인하세요 (CSV 또는 ZIP)")
+    st.error("2. 파일 크기가 너무 크지 않은지 확인하세요")
+    st.error("3. 파일을 다시 업로드해보세요")
     st.stop()
 
 st.divider()
