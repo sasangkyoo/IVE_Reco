@@ -129,7 +129,7 @@ def load_actual_interactions():
     """실제 상호작용 데이터 로드 (원본 데이터)"""
     try:
         cache_file = "actual_interactions_cache.pkl"
-        source_file = "input/save/correct_interactions.csv"
+        source_file = "correct_interactions.zip"
         
         if os.path.exists(cache_file) and os.path.exists(source_file):
             cache_time = os.path.getmtime(cache_file)
@@ -138,8 +138,17 @@ def load_actual_interactions():
                 with open(cache_file, 'rb') as f:
                     return pickle.load(f)
         
-        # 원본 상호작용 데이터 로드
-        interactions_df = pd.read_csv(source_file)
+        # 원본 상호작용 데이터 로드 (압축 파일에서 직접 읽기)
+        if source_file.endswith('.zip'):
+            with zipfile.ZipFile(source_file, 'r') as zip_ref:
+                csv_files = [f for f in zip_ref.namelist() if f.endswith('.csv')]
+                if csv_files:
+                    with zip_ref.open(csv_files[0]) as f:
+                        interactions_df = pd.read_csv(f)
+                else:
+                    raise FileNotFoundError(f"No CSV file found in {source_file}")
+        else:
+            interactions_df = pd.read_csv(source_file)
         
         # user_device_id 컬럼이 있으면 사용, 없으면 user_ip 사용
         if 'user_device_id' in interactions_df.columns:
