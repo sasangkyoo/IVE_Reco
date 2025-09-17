@@ -453,6 +453,11 @@ with col3:
         key="interactions_upload"
     )
 
+# 파일 업로드가 변경되면 성공 메시지 상태 리셋
+if any([ads_file, users_file, interactions_file]):
+    if "data_loaded_successfully" in st.session_state:
+        del st.session_state["data_loaded_successfully"]
+
 # 기본 파일 경로 설정 (샘플 데이터 우선 사용)
 if ads_file is None:
     # 샘플 데이터가 있으면 우선 사용, 없으면 원본 데이터 사용
@@ -501,14 +506,18 @@ try:
         actual_interactions = load_actual_interactions(interactions_file_path)
         detailed_interactions = load_detailed_user_interactions(users_file_path)
     
-    # 데이터 로딩 성공 메시지 (10초 후 자동 사라짐)
-    success_placeholder = st.empty()
-    success_placeholder.success("✅ 모든 데이터가 성공적으로 로드되었습니다!")
-    
-    # 10초 후 메시지 제거
-    import time
-    time.sleep(10)
-    success_placeholder.empty()
+    # 데이터 로딩 성공 메시지 (처음 로딩할 때만 표시)
+    if "data_loaded_successfully" not in st.session_state:
+        success_placeholder = st.empty()
+        success_placeholder.success("✅ 모든 데이터가 성공적으로 로드되었습니다!")
+        
+        # 10초 후 메시지 제거
+        import time
+        time.sleep(10)
+        success_placeholder.empty()
+        
+        # 세션 상태에 성공 표시 저장
+        st.session_state["data_loaded_successfully"] = True
     
 except Exception as e:
     st.error(f"❌ 데이터 로딩 오류: {e}")
