@@ -691,8 +691,8 @@ if run:
                         actual_ads[ad_key] = {
                             "광고코드": ad_row["ads_code"],
                             "광고명": ad_row["ads_name"],
-                            "광고타입": ad_row["ads_type"],
-                            "광고카테고리": ad_row["ads_category"],
+                            "광고타입": get_type_name(ad_row["ads_type"]),
+                            "광고카테고리": get_category_name(ad_row["ads_category"]),
                             "상호작용유형": clean_interaction_type,
                             "상호작용횟수": 0
                         }
@@ -728,8 +728,8 @@ if run:
                         detailed_ads.append({
                             "광고코드": ad_row["ads_code"],
                             "광고명": ad_row["ads_name"],
-                            "광고타입": ad_row["ads_type"],
-                            "광고카테고리": ad_row["ads_category"],
+                            "광고타입": get_type_name(ad_row["ads_type"]),
+                            "광고카테고리": get_category_name(ad_row["ads_category"]),
                             "상호작용유형": interaction['interaction_type'],
                             "상호작용횟수": interaction['count']
                         })
@@ -745,8 +745,8 @@ if run:
                             detailed_ads.append({
                                 "광고코드": ad_row["ads_code"],
                                 "광고명": ad_row["ads_name"],
-                                "광고타입": ad_row["ads_type"],
-                                "광고카테고리": ad_row["ads_category"],
+                                "광고타입": get_type_name(ad_row["ads_type"]),
+                                "광고카테고리": get_category_name(ad_row["ads_category"]),
                                 "상호작용유형": interaction['interaction_type'],
                                 "상호작용횟수": interaction['count']
                             })
