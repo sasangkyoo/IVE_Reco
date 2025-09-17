@@ -937,33 +937,56 @@ if run:
         # 추가 분석 정보 계산
         user_vector = U[id_to_row[uid_input]]
         
-        # 카테고리 선호도 계산 (사용자 벡터에서 해당 카테고리 관련 피처들의 평균)
+        # 카테고리 선호도 계산 (실제 사용자 상호작용 기반 동적 계산)
         category_preferences = []
         type_preferences = []
         
+        # 사용자별 카테고리/타입 선호도 계산 (실제 상호작용 데이터 기반)
+        user_cat_prefs = {}
+        user_type_prefs = {}
+        
+        # 실제 상호작용 데이터에서 선호도 계산
+        if uid_input in user_actual_interactions:
+            user_ads = user_actual_interactions[uid_input]
+            
+            # 카테고리별 상호작용 빈도 계산
+            cat_counts = {}
+            type_counts = {}
+            total_interactions = len(user_ads)
+            
+            for ad in user_ads:
+                cat = ad.get("ads_category")
+                ad_type = ad.get("ads_type")
+                
+                if cat is not None:
+                    cat_counts[cat] = cat_counts.get(cat, 0) + 1
+                if ad_type is not None:
+                    type_counts[ad_type] = type_counts.get(ad_type, 0) + 1
+            
+            # 선호도 점수 계산 (0~1 범위로 정규화)
+            for cat, count in cat_counts.items():
+                user_cat_prefs[cat] = min(count / max(total_interactions, 1), 1.0)
+            
+            for ad_type, count in type_counts.items():
+                user_type_prefs[ad_type] = min(count / max(total_interactions, 1), 1.0)
+        
         for _, row in detailed_df.iterrows():
-            # 카테고리 선호도 (사용자 상호작용 정보 기반)
+            # 카테고리 선호도 (실제 상호작용 빈도 기반)
             category = row["광고카테고리"]
-            if uid_input in user_interactions:
-                interacted_cats = user_interactions[uid_input].get("categories", [])
-                if category in interacted_cats:
-                    cat_pref = 0.8  # 상호작용한 카테고리는 높은 선호도
-                else:
-                    cat_pref = 0.4  # 상호작용하지 않은 카테고리는 낮은 선호도
+            if category in user_cat_prefs:
+                cat_pref = user_cat_prefs[category]
             else:
-                cat_pref = 0.5  # 상호작용 정보가 없으면 중간 선호도
+                # 상호작용하지 않은 카테고리는 낮은 선호도 (0.1~0.3 범위)
+                cat_pref = 0.2
             category_preferences.append(cat_pref)
             
-            # 타입 선호도 (사용자 상호작용 정보 기반)
+            # 타입 선호도 (실제 상호작용 빈도 기반)
             ad_type = row["광고타입"]
-            if uid_input in user_interactions:
-                interacted_types = user_interactions[uid_input].get("types", [])
-                if ad_type in interacted_types:
-                    type_pref = 0.7  # 상호작용한 타입은 높은 선호도
-                else:
-                    type_pref = 0.3  # 상호작용하지 않은 타입은 낮은 선호도
+            if ad_type in user_type_prefs:
+                type_pref = user_type_prefs[ad_type]
             else:
-                type_pref = 0.5  # 상호작용 정보가 없으면 중간 선호도
+                # 상호작용하지 않은 타입은 낮은 선호도 (0.1~0.3 범위)
+                type_pref = 0.2
             type_preferences.append(type_pref)
         
         detailed_df["카테고리선호도"] = category_preferences
