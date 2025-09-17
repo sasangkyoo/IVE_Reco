@@ -125,11 +125,10 @@ def load_interactions_from_user_profile(user_csv: str):
 
 
 @st.cache_data(show_spinner=False)
-def load_actual_interactions():
+def load_actual_interactions(source_file="correct_interactions.zip"):
     """실제 상호작용 데이터 로드 (원본 데이터)"""
     try:
         cache_file = "actual_interactions_cache.pkl"
-        source_file = "correct_interactions.zip"
         
         if os.path.exists(cache_file) and os.path.exists(source_file):
             cache_time = os.path.getmtime(cache_file)
@@ -427,16 +426,53 @@ with st.sidebar:
 # 데이터 로드
 try:
     with st.spinner("광고 데이터 로딩 중..."):
-        A, feat_cols_ads, ads_meta = load_ads("ads_profile.zip")
+        A, feat_cols_ads, ads_meta = load_ads(ads_file_path)
     with st.spinner("사용자 데이터 로딩 중..."):
-        U, user_ids, id_to_row, feat_cols_user, interaction_info = load_users("user_profile.zip", feat_cols_ads)
+        U, user_ids, id_to_row, feat_cols_user, interaction_info = load_users(users_file_path, feat_cols_ads)
     with st.spinner("상호작용 데이터 로딩 중..."):
-        user_interactions = load_interactions_from_user_profile("user_profile.zip")
-        actual_interactions = load_actual_interactions()
-        detailed_interactions = load_detailed_user_interactions("user_profile.zip")
+        user_interactions = load_interactions_from_user_profile(users_file_path)
+        actual_interactions = load_actual_interactions(interactions_file_path)
+        detailed_interactions = load_detailed_user_interactions(users_file_path)
 except Exception as e:
     st.error(f"데이터 로딩 오류: {e}")
     st.stop()
+
+# 파일 업로드 섹션
+st.subheader("📁 데이터 파일 업로드 (선택사항)")
+
+# 파일 업로드 위젯들
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    ads_file = st.file_uploader(
+        "광고 프로필 파일",
+        type=['csv', 'zip'],
+        help="ads_profile.csv 또는 ads_profile.zip 파일을 업로드하세요.",
+        key="ads_upload"
+    )
+
+with col2:
+    users_file = st.file_uploader(
+        "사용자 프로필 파일",
+        type=['csv', 'zip'],
+        help="user_profile.csv 또는 user_profile.zip 파일을 업로드하세요.",
+        key="users_upload"
+    )
+
+with col3:
+    interactions_file = st.file_uploader(
+        "상호작용 데이터 파일",
+        type=['csv', 'zip'],
+        help="correct_interactions.csv 또는 correct_interactions.zip 파일을 업로드하세요.",
+        key="interactions_upload"
+    )
+
+# 기본 파일 경로 설정
+ads_file_path = "ads_profile.zip" if ads_file is None else ads_file
+users_file_path = "user_profile.zip" if users_file is None else users_file
+interactions_file_path = "correct_interactions.zip" if interactions_file is None else interactions_file
+
+st.divider()
 
 # 사용자 선택
 st.subheader("1️⃣ 사용자 선택")
