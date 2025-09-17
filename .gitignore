@@ -48,10 +48,18 @@ Thumbs.db
 !requirements.txt
 !README.md
 !STREAMLIT_DEPLOYMENT.md
-!correct_interactions.zip
-!ads_profile.zip
-!user_profile.zip
-!extract_data.py
+!*_sample.zip
+!create_sample_data.py
+
+# Ignore large original data files
+ads_profile.zip
+user_profile.zip
+correct_interactions.zip
+
+# Ignore unnecessary directories
+user/
+input/
+preprocessed/
 
 # Streamlit
 .streamlit/
