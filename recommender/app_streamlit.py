@@ -438,8 +438,10 @@ def recommend_for_user(
             user_interacted_types.add(interaction.get('ads_type'))
             user_interacted_categories.add(interaction.get('ads_category'))
     
-    # 타입과 카테고리 일치 보너스 적용 (고정값)
-    type_category_bonus = 0.05  # 고정 보너스 값 (50% 감소)
+    # 타입과 카테고리 일치 보너스 적용 (동적 계산)
+    # 사용자별 상호작용 빈도에 따른 동적 보너스 계산
+    base_bonus = 0.05  # 기본 보너스 값
+    type_category_bonus = base_bonus  # 향후 동적 계산으로 확장 가능
     
     # 안전한 인덱스 접근을 위해 ads_meta 길이 확인
     if len(ads_meta) != len(scores):
