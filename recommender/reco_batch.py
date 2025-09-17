@@ -31,6 +31,46 @@ import math
 import warnings
 warnings.filterwarnings('ignore')
 
+# 타입과 카테고리 매핑 정의
+TYPE_MAPPING = {
+    1: "설치형",
+    2: "실행형", 
+    3: "참여형",
+    4: "클릭형",
+    5: "페북",
+    6: "트위터", 
+    7: "인스타",
+    8: "노출형",
+    9: "퀘스트",
+    10: "유튜브",
+    11: "네이버",
+    12: "CPS(물건구매)"
+}
+
+CATEGORY_MAPPING = {
+    0: "카테고리 선택안함",
+    1: "앱(간편적립)",
+    2: "경험하기(게임적립)/앱(간편적립) - cpi,cpe",
+    3: "구독(간편적립)",
+    4: "간편미션-퀘즈(간편적립)",
+    5: "경험하기(게임적립) - cpa",
+    6: "멀티보상(게임적립)",
+    7: "금융(참여적립)",
+    8: "무료참여(참여적립)",
+    10: "유료참여(참여적립)",
+    11: "쇼핑-상품별카테고리(쇼핑적립)",
+    12: "제휴몰(쇼핑적립)",
+    13: "간편미션(간편적립)"
+}
+
+def get_type_name(type_num: int) -> str:
+    """타입 번호를 실제 이름으로 변환"""
+    return TYPE_MAPPING.get(type_num, f"타입{type_num}")
+
+def get_category_name(category_num: int) -> str:
+    """카테고리 번호를 실제 이름으로 변환"""
+    return CATEGORY_MAPPING.get(category_num, f"카테고리{category_num}")
+
 # ==== v4.2 Rare Category Guard & Coverage Boost ====
 EPS = 1e-9
 
