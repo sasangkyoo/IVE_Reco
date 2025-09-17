@@ -30,41 +30,22 @@ def l2_normalize(mat: np.ndarray, eps: float = 1e-9) -> np.ndarray:
     norms = np.maximum(norms, eps)
     return mat / norms
 
-def extract_zip_if_needed():
-    """압축 파일들이 있으면 해제합니다."""
-    # correct_interactions.zip 해제
-    zip_file = "correct_interactions.zip"
-    target_file = "input/save/correct_interactions.csv"
-    
-    if not os.path.exists(target_file) and os.path.exists(zip_file):
-        os.makedirs("input/save", exist_ok=True)
-        with zipfile.ZipFile(zip_file, 'r') as zip_ref:
-            zip_ref.extractall("input/save/")
-        print(f"✅ correct_interactions.zip 해제 완료: {target_file}")
-    
-    # ads_profile.zip 해제
-    ads_zip = "ads_profile.zip"
-    ads_target = "preprocessed/ads_profile.csv"
-    
-    if not os.path.exists(ads_target) and os.path.exists(ads_zip):
-        os.makedirs("preprocessed", exist_ok=True)
-        with zipfile.ZipFile(ads_zip, 'r') as zip_ref:
-            zip_ref.extractall("preprocessed/")
-        print(f"✅ ads_profile.zip 해제 완료: {ads_target}")
-    
-    # user_profile.zip 해제
-    user_zip = "user_profile.zip"
-    user_target = "preprocessed/user_profile.csv"
-    
-    if not os.path.exists(user_target) and os.path.exists(user_zip):
-        os.makedirs("preprocessed", exist_ok=True)
-        with zipfile.ZipFile(user_zip, 'r') as zip_ref:
-            zip_ref.extractall("preprocessed/")
-        print(f"✅ user_profile.zip 해제 완료: {user_target}")
+# 압축 해제 기능 제거 - 압축 파일을 직접 사용
 
 @st.cache_data(show_spinner=False)
 def load_ads(ads_csv: str):
-    df = pd.read_csv(ads_csv)
+    # 압축 파일에서 직접 읽기
+    if ads_csv.endswith('.zip'):
+        with zipfile.ZipFile(ads_csv, 'r') as zip_ref:
+            # ZIP 파일 내의 CSV 파일명 찾기
+            csv_files = [f for f in zip_ref.namelist() if f.endswith('.csv')]
+            if csv_files:
+                with zip_ref.open(csv_files[0]) as f:
+                    df = pd.read_csv(f)
+            else:
+                raise FileNotFoundError(f"No CSV file found in {ads_csv}")
+    else:
+        df = pd.read_csv(ads_csv)
     feat_cols = infer_feature_cols(df)
     meta_cols = ["ads_idx", "ads_code", "ads_type", "ads_category", "ads_name"]
     for c in meta_cols:
@@ -270,7 +251,18 @@ def load_detailed_user_interactions(user_csv: str):
 
 @st.cache_data(show_spinner=False)
 def load_users(user_csv: str, feat_cols_hint: List[str]):
-    df = pd.read_csv(user_csv, dtype={"user_device_id": str})
+    # 압축 파일에서 직접 읽기
+    if user_csv.endswith('.zip'):
+        with zipfile.ZipFile(user_csv, 'r') as zip_ref:
+            # ZIP 파일 내의 CSV 파일명 찾기
+            csv_files = [f for f in zip_ref.namelist() if f.endswith('.csv')]
+            if csv_files:
+                with zip_ref.open(csv_files[0]) as f:
+                    df = pd.read_csv(f, dtype={"user_device_id": str})
+            else:
+                raise FileNotFoundError(f"No CSV file found in {user_csv}")
+    else:
+        df = pd.read_csv(user_csv, dtype={"user_device_id": str})
     if "user_device_id" not in df.columns:
         raise ValueError("사용자 CSV에 'user_device_id' 컬럼이 없습니다.")
     
@@ -407,13 +399,13 @@ with st.sidebar:
 # 데이터 로드
 try:
     with st.spinner("광고 데이터 로딩 중..."):
-        A, feat_cols_ads, ads_meta = load_ads("preprocessed/ads_profile.csv")
+        A, feat_cols_ads, ads_meta = load_ads("ads_profile.zip")
     with st.spinner("사용자 데이터 로딩 중..."):
-        U, user_ids, id_to_row, feat_cols_user, interaction_info = load_users("preprocessed/user_profile.csv", feat_cols_ads)
+        U, user_ids, id_to_row, feat_cols_user, interaction_info = load_users("user_profile.zip", feat_cols_ads)
     with st.spinner("상호작용 데이터 로딩 중..."):
-        user_interactions = load_interactions_from_user_profile("preprocessed/user_profile.csv")
+        user_interactions = load_interactions_from_user_profile("user_profile.zip")
         actual_interactions = load_actual_interactions()
-        detailed_interactions = load_detailed_user_interactions("preprocessed/user_profile.csv")
+        detailed_interactions = load_detailed_user_interactions("user_profile.zip")
 except Exception as e:
     st.error(f"데이터 로딩 오류: {e}")
     st.stop()
@@ -820,4 +812,4 @@ if run:
 
 # 앱 시작 시 압축 파일 해제
 if __name__ == "__main__":
-    extract_zip_if_needed()
+    # 압축 해제 기능 제거됨 - 압축 파일을 직접 사용
