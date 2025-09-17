@@ -489,10 +489,12 @@ if any([ads_file, users_file, interactions_file]):
     if "data_loaded_successfully" in st.session_state:
         del st.session_state["data_loaded_successfully"]
 
-# 기본 파일 경로 설정 (샘플 데이터 우선 사용)
+# 기본 파일 경로 설정 (실제 데이터 기반 샘플 데이터 우선 사용)
 if ads_file is None:
-    # 샘플 데이터 우선, 그 다음 원본
-    if os.path.exists("ads_profile_sample.zip"):
+    # 실제 데이터 기반 샘플 우선, 그 다음 일반 샘플, 마지막 원본
+    if os.path.exists("ads_profile_real_sample.zip"):
+        ads_file_path = "ads_profile_real_sample.zip"
+    elif os.path.exists("ads_profile_sample.zip"):
         ads_file_path = "ads_profile_sample.zip"
     elif os.path.exists("ads_profile.zip"):
         ads_file_path = "ads_profile.zip"
@@ -503,7 +505,9 @@ else:
     ads_file_path = ads_file
 
 if users_file is None:
-    if os.path.exists("user_profile_sample.zip"):
+    if os.path.exists("user_profile_real_sample.zip"):
+        users_file_path = "user_profile_real_sample.zip"
+    elif os.path.exists("user_profile_sample.zip"):
         users_file_path = "user_profile_sample.zip"
     elif os.path.exists("user_profile.zip"):
         users_file_path = "user_profile.zip"
@@ -514,7 +518,9 @@ else:
     users_file_path = users_file
 
 if interactions_file is None:
-    if os.path.exists("correct_interactions_sample.zip"):
+    if os.path.exists("correct_interactions_real_sample.zip"):
+        interactions_file_path = "correct_interactions_real_sample.zip"
+    elif os.path.exists("correct_interactions_sample.zip"):
         interactions_file_path = "correct_interactions_sample.zip"
     elif os.path.exists("correct_interactions.zip"):
         interactions_file_path = "correct_interactions.zip"
