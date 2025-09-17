@@ -380,7 +380,16 @@ def recommend_for_user(
     # 타입과 카테고리 일치 보너스 적용 (고정값)
     type_category_bonus = 0.05  # 고정 보너스 값 (50% 감소)
     
+    # 안전한 인덱스 접근을 위해 ads_meta 길이 확인
+    if len(ads_meta) != len(scores):
+        st.error(f"❌ 데이터 불일치: 광고 메타데이터 {len(ads_meta)}개 vs 점수 배열 {len(scores)}개")
+        st.stop()
+    
     for i, (_, ad_row) in enumerate(ads_meta.iterrows()):
+        # 인덱스 범위 체크
+        if i >= len(scores):
+            break
+            
         ad_type = ad_row['ads_type']
         ad_category = ad_row['ads_category']
         
@@ -623,7 +632,7 @@ if run:
             actual_ads = {}
             for interaction in actual_interactions[uid_input]:
                 ads_idx = interaction['ads_idx']
-                # ads_idx로 광고 정보 찾기
+                # ads_idx로 광고 정보 찾기 (안전한 접근)
                 ad_info = ads_meta[ads_meta['ads_idx'] == ads_idx]
                 if len(ad_info) > 0:
                     ad_row = ad_info.iloc[0]

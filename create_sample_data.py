@@ -47,16 +47,33 @@ def create_sample_user_profile():
     print(f"✅ user_profile_sample.zip 생성 완료 ({len(sample_df):,}개 사용자)")
 
 def create_sample_interactions():
-    """상호작용 데이터 샘플 생성 (10,000개)"""
+    """상호작용 데이터 샘플 생성 (10,000개) - 샘플 광고 데이터와 호환되도록 필터링"""
     print("🔄 상호작용 데이터 샘플 생성 중...")
     
-    # 원본 데이터 로드
+    # 먼저 샘플 광고 데이터의 인덱스 범위 확인
+    with zipfile.ZipFile("ads_profile_sample.zip", 'r') as zip_ref:
+        with zip_ref.open("ads_profile.csv") as f:
+            ads_df = pd.read_csv(f)
+    
+    # 샘플 광고의 인덱스 범위
+    min_ads_idx = ads_df['ads_idx'].min()
+    max_ads_idx = ads_df['ads_idx'].max()
+    print(f"📊 샘플 광고 인덱스 범위: {min_ads_idx} ~ {max_ads_idx}")
+    
+    # 원본 상호작용 데이터 로드
     with zipfile.ZipFile("correct_interactions.zip", 'r') as zip_ref:
         with zip_ref.open("correct_interactions.csv") as f:
             df = pd.read_csv(f)
     
-    # 10,000개 샘플링
-    sample_df = df.sample(n=10000, random_state=42)
+    # 샘플 광고 인덱스 범위에 맞는 상호작용만 필터링
+    filtered_df = df[(df['ads_idx'] >= min_ads_idx) & (df['ads_idx'] <= max_ads_idx)]
+    print(f"📊 필터링된 상호작용: {len(filtered_df):,}개")
+    
+    # 10,000개 샘플링 (필터링된 데이터에서)
+    if len(filtered_df) > 10000:
+        sample_df = filtered_df.sample(n=10000, random_state=42)
+    else:
+        sample_df = filtered_df
     
     # 압축 파일로 저장
     with zipfile.ZipFile("correct_interactions_sample.zip", 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as zip_ref:
