@@ -88,15 +88,10 @@ IVE_Reco/
 ├── recommender/
 │   └── app_streamlit.py          # 메인 Streamlit 앱
 ├── 데이터 파일 (ZIP 압축)
-│   ├── ads_profile_expanded_sample.zip     # 확장된 광고 데이터 (5,000개)
-│   ├── ads_profile_real_sample.zip         # 실제 데이터 기반 광고 (1,000개)
-│   ├── ads_profile_sample.zip              # 기본 샘플 광고 데이터 (1,000개)
-│   ├── user_profile_expanded_sample.zip    # 확장된 사용자 데이터 (500명)
-│   ├── user_profile_real_sample.zip        # 실제 데이터 기반 사용자 (500명)
-│   ├── user_profile_sample.zip             # 기본 샘플 사용자 데이터 (500명)
-│   ├── correct_interactions_expanded_sample.zip  # 확장된 상호작용 데이터 (10,154개)
-│   ├── correct_interactions_real_sample.zip      # 실제 데이터 기반 상호작용 (10,154개)
-│   └── correct_interactions_sample.zip           # 기본 샘플 상호작용 데이터 (10,154개)
+│   ├── ads_profile_expanded_sample.zip     # 확장된 광고 데이터 (5,000개) - 우선 사용
+│   ├── ads_profile_sample.zip              # 기본 샘플 광고 데이터 (1,000개) - 백업
+│   ├── user_profile_sample.zip             # 기본 샘플 사용자 데이터 (500명) - 우선 사용
+│   └── correct_interactions_sample.zip     # 기본 샘플 상호작용 데이터 (10,154개) - 우선 사용
 ├── 설정 파일
 │   ├── requirements.txt                    # Python 의존성
 │   ├── .gitignore                          # Git 무시 파일
