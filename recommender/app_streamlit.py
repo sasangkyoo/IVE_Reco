@@ -829,7 +829,7 @@ if run:
             rec_ads_features = A[rec_ads_indices]
         else:
             st.error("추천된 광고의 피처를 찾을 수 없습니다.")
-            return
+            st.stop()
         
         # 사용자 선호도와 각 추천 광고의 유사도 계산
         similarities = (user_vector @ rec_ads_features.T).flatten()
