@@ -518,8 +518,6 @@ except Exception as e:
     st.error("3. 파일을 다시 업로드해보세요")
     st.stop()
 
-st.divider()
-
 # 사용자 선택
 st.subheader("1️⃣ 사용자 선택")
 col1, col2 = st.columns([4,1])
