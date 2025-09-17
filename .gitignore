@@ -49,7 +49,8 @@ Thumbs.db
 !README.md
 !STREAMLIT_DEPLOYMENT.md
 !*_sample.zip
-!create_sample_data.py
+!*_expanded_sample.zip
+!*_real_sample.zip
 
 # Ignore large original data files
 ads_profile.zip
@@ -70,3 +71,6 @@ preprocessed/
 # Temporary files
 temp/
 tmp/
+
+# Cache files
+*_cache.pkl

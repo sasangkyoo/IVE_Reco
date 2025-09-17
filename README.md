@@ -48,21 +48,19 @@ IVE 추천시스템은 사용자의 광고 상호작용 이력을 기반으로 �
   - 클릭+전환: 771,091개 (52.2%)
   - 클릭: 706,250개 (47.8%)
 
-### 현실적인 샘플 데이터 (사용 중)
-- **총 상호작용**: 7,311개 (샘플)
+### 샘플 데이터 (사용 중)
+- **총 상호작용**: 10,154개 (샘플)
 - **사용자**: 500명 (샘플)
-- **광고**: 5,000개 (1,000개 실제 + 4,000개 확장)
+- **광고**: 5,000개 (확장된 샘플) 또는 1,000개 (기본 샘플)
 - **사용자별 상호작용 분포**:
-  - 평균: 14.6개, 중간값: 3.0개, 표준편차: 30.9개
-  - 최대: 193개, 최소: 1개
-- **사용자 분포** (파레토 분포):
-  - 5% 매우 활성: 50-200개 상호작용 (32명)
-  - 10% 활성: 10-50개 상호작용 (99명)
-  - 20% 보통: 3-10개 상호작용 (197명)
-  - 65% 비활성: 1-3개 상호작용 (172명)
+  - 평균: 20.3개, 중간값: 15개, 표준편차: 15.2개
+  - 최대: 50개, 최소: 1개
+- **사용자 분포** (균등 분포):
+  - 모든 사용자가 1-50개 상호작용
+  - 실제 디바이스 ID 사용 (예: '31380637', '53455653')
 - **상호작용 타입 분포**:
-  - 클릭+전환: 3,823개 (52.3%)
-  - 클릭: 3,488개 (47.7%)
+  - 클릭+전환: 5,077개 (50.0%)
+  - 클릭: 5,077개 (50.0%)
 
 ### 광고 메타데이터
 - **총 광고**: 5,000개 (확장된 샘플)
@@ -90,21 +88,19 @@ IVE_Reco/
 ├── recommender/
 │   └── app_streamlit.py          # 메인 Streamlit 앱
 ├── 데이터 파일 (ZIP 압축)
-│   ├── user_profile_realistic.zip      # 현실적인 사용자 데이터 (500명)
-│   ├── correct_interactions_realistic.zip  # 현실적인 상호작용 데이터 (7,311개)
 │   ├── ads_profile_expanded_sample.zip     # 확장된 광고 데이터 (5,000개)
-│   ├── user_profile_sample.zip             # 샘플 사용자 데이터 (500명)
-│   ├── correct_interactions_sample.zip     # 샘플 상호작용 데이터 (10,154개)
-│   └── ads_profile_sample.zip              # 샘플 광고 데이터 (1,000개)
-├── 데이터 생성 스크립트
-│   ├── create_realistic_sample.py         # 현실적인 샘플 데이터 생성
-│   ├── create_expanded_sample_data.py     # 확장된 샘플 데이터 생성
-│   ├── create_real_sample_data.py         # 실제 데이터 기반 샘플 생성
-│   └── create_natural_interactions.py     # 자연스러운 상호작용 생성
-├── 분석 스크립트
-│   ├── check_original_interactions.py     # 원본 데이터 분석
-│   ├── check_real_interactions.py         # 샘플 데이터 분석
-│   └── analyze_interactions.py            # 상호작용 분석
+│   ├── ads_profile_real_sample.zip         # 실제 데이터 기반 광고 (1,000개)
+│   ├── ads_profile_sample.zip              # 기본 샘플 광고 데이터 (1,000개)
+│   ├── user_profile_expanded_sample.zip    # 확장된 사용자 데이터 (500명)
+│   ├── user_profile_real_sample.zip        # 실제 데이터 기반 사용자 (500명)
+│   ├── user_profile_sample.zip             # 기본 샘플 사용자 데이터 (500명)
+│   ├── correct_interactions_expanded_sample.zip  # 확장된 상호작용 데이터 (10,154개)
+│   ├── correct_interactions_real_sample.zip      # 실제 데이터 기반 상호작용 (10,154개)
+│   └── correct_interactions_sample.zip           # 기본 샘플 상호작용 데이터 (10,154개)
+├── 설정 파일
+│   ├── requirements.txt                    # Python 의존성
+│   ├── .gitignore                          # Git 무시 파일
+│   └── STREAMLIT_DEPLOYMENT.md             # 배포 가이드
 └── README.md                               # 프로젝트 설명서
 ```
 
