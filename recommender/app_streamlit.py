@@ -486,10 +486,12 @@ if any([ads_file, users_file, interactions_file]):
     if "data_loaded_successfully" in st.session_state:
         del st.session_state["data_loaded_successfully"]
 
-# 기본 파일 경로 설정 (샘플 데이터 우선 사용)
+# 기본 파일 경로 설정 (매우 작은 샘플 데이터 우선 사용)
 if ads_file is None:
-    # 샘플 데이터가 있으면 우선 사용, 없으면 원본 데이터 사용
-    if os.path.exists("ads_profile_sample.zip"):
+    # 매우 작은 샘플 데이터 우선, 그 다음 일반 샘플, 마지막 원본
+    if os.path.exists("ads_profile_tiny.zip"):
+        ads_file_path = "ads_profile_tiny.zip"
+    elif os.path.exists("ads_profile_sample.zip"):
         ads_file_path = "ads_profile_sample.zip"
     elif os.path.exists("ads_profile.zip"):
         ads_file_path = "ads_profile.zip"
@@ -500,7 +502,9 @@ else:
     ads_file_path = ads_file
 
 if users_file is None:
-    if os.path.exists("user_profile_sample.zip"):
+    if os.path.exists("user_profile_tiny.zip"):
+        users_file_path = "user_profile_tiny.zip"
+    elif os.path.exists("user_profile_sample.zip"):
         users_file_path = "user_profile_sample.zip"
     elif os.path.exists("user_profile.zip"):
         users_file_path = "user_profile.zip"
@@ -511,7 +515,9 @@ else:
     users_file_path = users_file
 
 if interactions_file is None:
-    if os.path.exists("correct_interactions_sample.zip"):
+    if os.path.exists("correct_interactions_tiny.zip"):
+        interactions_file_path = "correct_interactions_tiny.zip"
+    elif os.path.exists("correct_interactions_sample.zip"):
         interactions_file_path = "correct_interactions_sample.zip"
     elif os.path.exists("correct_interactions.zip"):
         interactions_file_path = "correct_interactions.zip"
@@ -539,12 +545,17 @@ try:
     
     with st.spinner("광고 데이터 로딩 중..."):
         A, feat_cols_ads, ads_meta = load_ads(ads_file_path)
+        st.write(f"✅ 광고 데이터 로드 완료: {len(ads_meta)}개")
+    
     with st.spinner("사용자 데이터 로딩 중..."):
         U, user_ids, id_to_row, feat_cols_user, interaction_info = load_users(users_file_path, feat_cols_ads)
+        st.write(f"✅ 사용자 데이터 로드 완료: {len(user_ids)}명")
+    
     with st.spinner("상호작용 데이터 로딩 중..."):
         user_interactions = load_interactions_from_user_profile(users_file_path)
         actual_interactions = load_actual_interactions(interactions_file_path)
         detailed_interactions = load_detailed_user_interactions(users_file_path)
+        st.write(f"✅ 상호작용 데이터 로드 완료: {len(actual_interactions)}명의 상호작용")
     
     # 데이터 로딩 성공 메시지 (처음 로딩할 때만 표시)
     if "data_loaded_successfully" not in st.session_state:
