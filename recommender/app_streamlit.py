@@ -501,8 +501,14 @@ try:
         actual_interactions = load_actual_interactions(interactions_file_path)
         detailed_interactions = load_detailed_user_interactions(users_file_path)
     
-    # 데이터 로딩 성공 메시지
-    st.success("✅ 모든 데이터가 성공적으로 로드되었습니다!")
+    # 데이터 로딩 성공 메시지 (10초 후 자동 사라짐)
+    success_placeholder = st.empty()
+    success_placeholder.success("✅ 모든 데이터가 성공적으로 로드되었습니다!")
+    
+    # 10초 후 메시지 제거
+    import time
+    time.sleep(10)
+    success_placeholder.empty()
     
 except Exception as e:
     st.error(f"❌ 데이터 로딩 오류: {e}")
