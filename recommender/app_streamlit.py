@@ -470,28 +470,28 @@ else:
     st.error("❌ 광고 데이터 파일을 찾을 수 없습니다.")
     st.stop()
 
-if os.path.exists("user_profile_realistic.zip"):
-    users_file_path = "user_profile_realistic.zip"
-elif os.path.exists("user_profile_sample.zip"):
+if os.path.exists("user_profile_sample.zip"):
     users_file_path = "user_profile_sample.zip"
 elif os.path.exists("user_profile_expanded_sample.zip"):
     users_file_path = "user_profile_expanded_sample.zip"
 elif os.path.exists("user_profile_real_sample.zip"):
     users_file_path = "user_profile_real_sample.zip"
+elif os.path.exists("user_profile_realistic.zip"):
+    users_file_path = "user_profile_realistic.zip"
 elif os.path.exists("user_profile.zip"):
     users_file_path = "user_profile.zip"
 else:
     st.error("❌ 사용자 데이터 파일을 찾을 수 없습니다.")
     st.stop()
 
-if os.path.exists("correct_interactions_realistic.zip"):
-    interactions_file_path = "correct_interactions_realistic.zip"
-elif os.path.exists("correct_interactions_sample.zip"):
+if os.path.exists("correct_interactions_sample.zip"):
     interactions_file_path = "correct_interactions_sample.zip"
 elif os.path.exists("correct_interactions_expanded_sample.zip"):
     interactions_file_path = "correct_interactions_expanded_sample.zip"
 elif os.path.exists("correct_interactions_real_sample.zip"):
     interactions_file_path = "correct_interactions_real_sample.zip"
+elif os.path.exists("correct_interactions_realistic.zip"):
+    interactions_file_path = "correct_interactions_realistic.zip"
 elif os.path.exists("correct_interactions.zip"):
     interactions_file_path = "correct_interactions.zip"
 else:
