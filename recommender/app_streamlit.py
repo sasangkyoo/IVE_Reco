@@ -423,20 +423,6 @@ with st.sidebar:
     st.markdown("---")
     st.caption("💡 대용량 CSV는 최초 로딩에 시간이 필요할 수 있습니다.")
 
-# 데이터 로드
-try:
-    with st.spinner("광고 데이터 로딩 중..."):
-        A, feat_cols_ads, ads_meta = load_ads(ads_file_path)
-    with st.spinner("사용자 데이터 로딩 중..."):
-        U, user_ids, id_to_row, feat_cols_user, interaction_info = load_users(users_file_path, feat_cols_ads)
-    with st.spinner("상호작용 데이터 로딩 중..."):
-        user_interactions = load_interactions_from_user_profile(users_file_path)
-        actual_interactions = load_actual_interactions(interactions_file_path)
-        detailed_interactions = load_detailed_user_interactions(users_file_path)
-except Exception as e:
-    st.error(f"데이터 로딩 오류: {e}")
-    st.stop()
-
 # 파일 업로드 섹션
 st.subheader("📁 데이터 파일 업로드 (선택사항)")
 
@@ -471,6 +457,22 @@ with col3:
 ads_file_path = "ads_profile.zip" if ads_file is None else ads_file
 users_file_path = "user_profile.zip" if users_file is None else users_file
 interactions_file_path = "correct_interactions.zip" if interactions_file is None else interactions_file
+
+st.divider()
+
+# 데이터 로드
+try:
+    with st.spinner("광고 데이터 로딩 중..."):
+        A, feat_cols_ads, ads_meta = load_ads(ads_file_path)
+    with st.spinner("사용자 데이터 로딩 중..."):
+        U, user_ids, id_to_row, feat_cols_user, interaction_info = load_users(users_file_path, feat_cols_ads)
+    with st.spinner("상호작용 데이터 로딩 중..."):
+        user_interactions = load_interactions_from_user_profile(users_file_path)
+        actual_interactions = load_actual_interactions(interactions_file_path)
+        detailed_interactions = load_detailed_user_interactions(users_file_path)
+except Exception as e:
+    st.error(f"데이터 로딩 오류: {e}")
+    st.stop()
 
 st.divider()
 
