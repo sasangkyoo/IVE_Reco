@@ -525,6 +525,11 @@ st.divider()
 
 # 데이터 로드
 try:
+    # 파일 경로 디버깅 정보
+    st.write(f"🔍 디버깅: 광고 파일 경로: {ads_file_path}")
+    st.write(f"🔍 디버깅: 사용자 파일 경로: {users_file_path}")
+    st.write(f"🔍 디버깅: 상호작용 파일 경로: {interactions_file_path}")
+    
     with st.spinner("광고 데이터 로딩 중..."):
         A, feat_cols_ads, ads_meta = load_ads(ads_file_path)
     with st.spinner("사용자 데이터 로딩 중..."):
@@ -553,6 +558,12 @@ except Exception as e:
     st.error("1. 파일이 올바른 형식인지 확인하세요 (CSV 또는 ZIP)")
     st.error("2. 파일 크기가 너무 크지 않은지 확인하세요")
     st.error("3. 파일을 다시 업로드해보세요")
+    
+    # 디버깅을 위한 상세 오류 정보
+    import traceback
+    st.error("🔍 상세 오류 정보:")
+    st.code(traceback.format_exc())
+    
     st.stop()
 
 # 사용자 선택
