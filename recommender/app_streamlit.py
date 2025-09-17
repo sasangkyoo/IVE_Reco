@@ -385,6 +385,7 @@ def recommend_for_user(
         st.error(f"❌ 데이터 불일치: 광고 메타데이터 {len(ads_meta)}개 vs 점수 배열 {len(scores)}개")
         st.stop()
     
+    # ads_meta의 인덱스를 scores 배열 인덱스와 매칭
     for i, (_, ad_row) in enumerate(ads_meta.iterrows()):
         # 인덱스 범위 체크
         if i >= len(scores):
@@ -603,7 +604,12 @@ if run:
             st.markdown("**👤 사용자 상호작용 정보**")
             col1, col2, col3, col4 = st.columns(4)
             with col1:
-                st.metric("총 상호작용", user_info["total_interactions"])
+                # 실제 상호작용 데이터가 있으면 실제 상호작용 수 계산
+                if uid_input in actual_interactions and actual_interactions[uid_input]:
+                    actual_total_interactions = len(actual_interactions[uid_input])
+                    st.metric("총 상호작용", actual_total_interactions)
+                else:
+                    st.metric("총 상호작용", user_info["total_interactions"])
             with col2:
                 # 실제 상호작용 데이터가 있으면 실제 고유 광고 수 계산
                 if uid_input in actual_interactions and actual_interactions[uid_input]:
