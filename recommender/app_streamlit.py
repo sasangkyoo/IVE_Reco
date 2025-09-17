@@ -152,9 +152,9 @@ def load_actual_interactions():
                             'rwd_price': 'float32',
                             'reward_point': 'float32'
                         }, low_memory=False)
-                        # 10% 샘플링으로 메모리 사용량 감소
+                        # 100,000행으로 제한하여 메모리 사용량 감소
                         if len(interactions_df) > 100000:
-                            interactions_df = interactions_df.sample(frac=0.1, random_state=42)
+                            interactions_df = interactions_df.sample(n=100000, random_state=42)
                 else:
                     raise FileNotFoundError(f"No CSV file found in {source_file}")
         else:
@@ -165,9 +165,9 @@ def load_actual_interactions():
                 'rwd_price': 'float32',
                 'reward_point': 'float32'
             }, low_memory=False)
-            # 10% 샘플링으로 메모리 사용량 감소
+            # 100,000행으로 제한하여 메모리 사용량 감소
             if len(interactions_df) > 100000:
-                interactions_df = interactions_df.sample(frac=0.1, random_state=42)
+                interactions_df = interactions_df.sample(n=100000, random_state=42)
         
         # user_device_id 컬럼이 있으면 사용, 없으면 user_ip 사용
         if 'user_device_id' in interactions_df.columns:
