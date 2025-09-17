@@ -456,8 +456,8 @@ with st.sidebar:
 
 # 파일 업로드 섹션 제거됨 - 확장된 샘플 데이터 자동 사용
 
-# 기본 파일 경로 설정 (실제 상호작용 데이터 우선 사용)
-# 실제 상호작용 데이터 우선, 그 다음 확장된 샘플, 실제 데이터 기반 샘플, 일반 샘플, 마지막 원본
+# 기본 파일 경로 설정 (현실적인 데이터 우선 사용)
+# 현실적인 데이터 우선, 그 다음 실제 상호작용 데이터, 확장된 샘플, 실제 데이터 기반 샘플, 일반 샘플, 마지막 원본
 if os.path.exists("ads_profile_expanded_sample.zip"):
     ads_file_path = "ads_profile_expanded_sample.zip"
 elif os.path.exists("ads_profile_real_sample.zip"):
@@ -470,7 +470,9 @@ else:
     st.error("❌ 광고 데이터 파일을 찾을 수 없습니다.")
     st.stop()
 
-if os.path.exists("user_profile_sample.zip"):
+if os.path.exists("user_profile_realistic.zip"):
+    users_file_path = "user_profile_realistic.zip"
+elif os.path.exists("user_profile_sample.zip"):
     users_file_path = "user_profile_sample.zip"
 elif os.path.exists("user_profile_expanded_sample.zip"):
     users_file_path = "user_profile_expanded_sample.zip"
@@ -482,7 +484,9 @@ else:
     st.error("❌ 사용자 데이터 파일을 찾을 수 없습니다.")
     st.stop()
 
-if os.path.exists("correct_interactions_sample.zip"):
+if os.path.exists("correct_interactions_realistic.zip"):
+    interactions_file_path = "correct_interactions_realistic.zip"
+elif os.path.exists("correct_interactions_sample.zip"):
     interactions_file_path = "correct_interactions_sample.zip"
 elif os.path.exists("correct_interactions_expanded_sample.zip"):
     interactions_file_path = "correct_interactions_expanded_sample.zip"
