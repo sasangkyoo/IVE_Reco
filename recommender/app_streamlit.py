@@ -131,7 +131,7 @@ def load_interactions_from_user_profile(user_csv: str):
 
 
 @st.cache_data(show_spinner=False)
-def load_actual_interactions(source_file="correct_interactions.zip"):
+def load_actual_interactions(source_file="correct_interactions.zip", is_uploaded_data=False):
     """실제 상호작용 데이터 로드 (원본 데이터)"""
     try:
         cache_file = "actual_interactions_cache.pkl"
@@ -163,8 +163,11 @@ def load_actual_interactions(source_file="correct_interactions.zip"):
                             'rwd_price': 'float32',
                             'reward_point': 'float32'
                         }, low_memory=False)
-                        # 100,000행으로 제한하여 메모리 사용량 감소
-                        if len(interactions_df) > 100000:
+                        # 실제 데이터 업로드 시 더 작은 샘플링 적용
+                        if is_uploaded_data and len(interactions_df) > 50000:
+                            interactions_df = interactions_df.sample(n=50000, random_state=42)
+                            st.info(f"📊 대용량 데이터로 인해 50,000개로 샘플링했습니다.")
+                        elif len(interactions_df) > 100000:
                             interactions_df = interactions_df.sample(n=100000, random_state=42)
                 else:
                     raise FileNotFoundError(f"No CSV file found in {source_file}")
@@ -486,12 +489,10 @@ if any([ads_file, users_file, interactions_file]):
     if "data_loaded_successfully" in st.session_state:
         del st.session_state["data_loaded_successfully"]
 
-# 기본 파일 경로 설정 (매우 작은 샘플 데이터 우선 사용)
+# 기본 파일 경로 설정 (샘플 데이터 우선 사용)
 if ads_file is None:
-    # 매우 작은 샘플 데이터 우선, 그 다음 일반 샘플, 마지막 원본
-    if os.path.exists("ads_profile_tiny.zip"):
-        ads_file_path = "ads_profile_tiny.zip"
-    elif os.path.exists("ads_profile_sample.zip"):
+    # 샘플 데이터 우선, 그 다음 원본
+    if os.path.exists("ads_profile_sample.zip"):
         ads_file_path = "ads_profile_sample.zip"
     elif os.path.exists("ads_profile.zip"):
         ads_file_path = "ads_profile.zip"
@@ -502,9 +503,7 @@ else:
     ads_file_path = ads_file
 
 if users_file is None:
-    if os.path.exists("user_profile_tiny.zip"):
-        users_file_path = "user_profile_tiny.zip"
-    elif os.path.exists("user_profile_sample.zip"):
+    if os.path.exists("user_profile_sample.zip"):
         users_file_path = "user_profile_sample.zip"
     elif os.path.exists("user_profile.zip"):
         users_file_path = "user_profile.zip"
@@ -515,9 +514,7 @@ else:
     users_file_path = users_file
 
 if interactions_file is None:
-    if os.path.exists("correct_interactions_tiny.zip"):
-        interactions_file_path = "correct_interactions_tiny.zip"
-    elif os.path.exists("correct_interactions_sample.zip"):
+    if os.path.exists("correct_interactions_sample.zip"):
         interactions_file_path = "correct_interactions_sample.zip"
     elif os.path.exists("correct_interactions.zip"):
         interactions_file_path = "correct_interactions.zip"
@@ -543,19 +540,44 @@ try:
     time.sleep(10)
     debug_placeholder.empty()
     
+    # 실제 데이터 업로드 시 안전장치
+    is_uploaded_data = any([ads_file, users_file, interactions_file])
+    
+    if is_uploaded_data:
+        st.warning("⚠️ 실제 데이터를 업로드했습니다. 로딩에 시간이 걸릴 수 있습니다.")
+        st.info("💡 문제가 발생하면 샘플 데이터를 사용해보세요.")
+    
     with st.spinner("광고 데이터 로딩 중..."):
-        A, feat_cols_ads, ads_meta = load_ads(ads_file_path)
-        st.write(f"✅ 광고 데이터 로드 완료: {len(ads_meta)}개")
+        try:
+            A, feat_cols_ads, ads_meta = load_ads(ads_file_path)
+            st.write(f"✅ 광고 데이터 로드 완료: {len(ads_meta)}개")
+        except Exception as e:
+            st.error(f"❌ 광고 데이터 로드 실패: {e}")
+            if is_uploaded_data:
+                st.error("💡 업로드한 파일에 문제가 있을 수 있습니다. 샘플 데이터를 사용해보세요.")
+            st.stop()
     
     with st.spinner("사용자 데이터 로딩 중..."):
-        U, user_ids, id_to_row, feat_cols_user, interaction_info = load_users(users_file_path, feat_cols_ads)
-        st.write(f"✅ 사용자 데이터 로드 완료: {len(user_ids)}명")
+        try:
+            U, user_ids, id_to_row, feat_cols_user, interaction_info = load_users(users_file_path, feat_cols_ads)
+            st.write(f"✅ 사용자 데이터 로드 완료: {len(user_ids)}명")
+        except Exception as e:
+            st.error(f"❌ 사용자 데이터 로드 실패: {e}")
+            if is_uploaded_data:
+                st.error("💡 업로드한 파일에 문제가 있을 수 있습니다. 샘플 데이터를 사용해보세요.")
+            st.stop()
     
     with st.spinner("상호작용 데이터 로딩 중..."):
-        user_interactions = load_interactions_from_user_profile(users_file_path)
-        actual_interactions = load_actual_interactions(interactions_file_path)
-        detailed_interactions = load_detailed_user_interactions(users_file_path)
-        st.write(f"✅ 상호작용 데이터 로드 완료: {len(actual_interactions)}명의 상호작용")
+        try:
+            user_interactions = load_interactions_from_user_profile(users_file_path)
+            actual_interactions = load_actual_interactions(interactions_file_path, is_uploaded_data)
+            detailed_interactions = load_detailed_user_interactions(users_file_path)
+            st.write(f"✅ 상호작용 데이터 로드 완료: {len(actual_interactions)}명의 상호작용")
+        except Exception as e:
+            st.error(f"❌ 상호작용 데이터 로드 실패: {e}")
+            if is_uploaded_data:
+                st.error("💡 업로드한 파일에 문제가 있을 수 있습니다. 샘플 데이터를 사용해보세요.")
+            st.stop()
     
     # 데이터 로딩 성공 메시지 (처음 로딩할 때만 표시)
     if "data_loaded_successfully" not in st.session_state:
