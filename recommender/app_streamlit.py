@@ -454,87 +454,45 @@ with st.sidebar:
     st.markdown("---")
     st.caption("💡 대용량 CSV는 최초 로딩에 시간이 필요할 수 있습니다.")
 
-# 파일 업로드 섹션
-st.subheader("📁 데이터 파일 업로드 (선택사항)")
+# 파일 업로드 섹션 제거됨 - 확장된 샘플 데이터 자동 사용
 
-# 파일 업로드 위젯들
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    ads_file = st.file_uploader(
-        "광고 프로필 파일",
-        type=['csv', 'zip'],
-        help="ads_profile.csv 또는 ads_profile.zip 파일을 업로드하세요.",
-        key="ads_upload"
-    )
-
-with col2:
-    users_file = st.file_uploader(
-        "사용자 프로필 파일",
-        type=['csv', 'zip'],
-        help="user_profile.csv 또는 user_profile.zip 파일을 업로드하세요.",
-        key="users_upload"
-    )
-
-with col3:
-    interactions_file = st.file_uploader(
-        "상호작용 데이터 파일",
-        type=['csv', 'zip'],
-        help="correct_interactions.csv 또는 correct_interactions.zip 파일을 업로드하세요.",
-        key="interactions_upload"
-    )
-
-# 파일 업로드가 변경되면 성공 메시지 상태 리셋
-if any([ads_file, users_file, interactions_file]):
-    if "data_loaded_successfully" in st.session_state:
-        del st.session_state["data_loaded_successfully"]
-
-# 기본 파일 경로 설정 (확장된 샘플 데이터 우선 사용)
-if ads_file is None:
-    # 확장된 샘플 우선, 그 다음 실제 데이터 기반 샘플, 일반 샘플, 마지막 원본
-    if os.path.exists("ads_profile_expanded_sample.zip"):
-        ads_file_path = "ads_profile_expanded_sample.zip"
-    elif os.path.exists("ads_profile_real_sample.zip"):
-        ads_file_path = "ads_profile_real_sample.zip"
-    elif os.path.exists("ads_profile_sample.zip"):
-        ads_file_path = "ads_profile_sample.zip"
-    elif os.path.exists("ads_profile.zip"):
-        ads_file_path = "ads_profile.zip"
-    else:
-        st.error("❌ 광고 데이터 파일을 찾을 수 없습니다. 파일을 업로드해주세요.")
-        st.stop()
+# 기본 파일 경로 설정 (확장된 샘플 데이터 자동 사용)
+# 확장된 샘플 우선, 그 다음 실제 데이터 기반 샘플, 일반 샘플, 마지막 원본
+if os.path.exists("ads_profile_expanded_sample.zip"):
+    ads_file_path = "ads_profile_expanded_sample.zip"
+elif os.path.exists("ads_profile_real_sample.zip"):
+    ads_file_path = "ads_profile_real_sample.zip"
+elif os.path.exists("ads_profile_sample.zip"):
+    ads_file_path = "ads_profile_sample.zip"
+elif os.path.exists("ads_profile.zip"):
+    ads_file_path = "ads_profile.zip"
 else:
-    ads_file_path = ads_file
+    st.error("❌ 광고 데이터 파일을 찾을 수 없습니다.")
+    st.stop()
 
-if users_file is None:
-    if os.path.exists("user_profile_expanded_sample.zip"):
-        users_file_path = "user_profile_expanded_sample.zip"
-    elif os.path.exists("user_profile_real_sample.zip"):
-        users_file_path = "user_profile_real_sample.zip"
-    elif os.path.exists("user_profile_sample.zip"):
-        users_file_path = "user_profile_sample.zip"
-    elif os.path.exists("user_profile.zip"):
-        users_file_path = "user_profile.zip"
-    else:
-        st.error("❌ 사용자 데이터 파일을 찾을 수 없습니다. 파일을 업로드해주세요.")
-        st.stop()
+if os.path.exists("user_profile_expanded_sample.zip"):
+    users_file_path = "user_profile_expanded_sample.zip"
+elif os.path.exists("user_profile_real_sample.zip"):
+    users_file_path = "user_profile_real_sample.zip"
+elif os.path.exists("user_profile_sample.zip"):
+    users_file_path = "user_profile_sample.zip"
+elif os.path.exists("user_profile.zip"):
+    users_file_path = "user_profile.zip"
 else:
-    users_file_path = users_file
+    st.error("❌ 사용자 데이터 파일을 찾을 수 없습니다.")
+    st.stop()
 
-if interactions_file is None:
-    if os.path.exists("correct_interactions_expanded_sample.zip"):
-        interactions_file_path = "correct_interactions_expanded_sample.zip"
-    elif os.path.exists("correct_interactions_real_sample.zip"):
-        interactions_file_path = "correct_interactions_real_sample.zip"
-    elif os.path.exists("correct_interactions_sample.zip"):
-        interactions_file_path = "correct_interactions_sample.zip"
-    elif os.path.exists("correct_interactions.zip"):
-        interactions_file_path = "correct_interactions.zip"
-    else:
-        st.error("❌ 상호작용 데이터 파일을 찾을 수 없습니다. 파일을 업로드해주세요.")
-        st.stop()
+if os.path.exists("correct_interactions_expanded_sample.zip"):
+    interactions_file_path = "correct_interactions_expanded_sample.zip"
+elif os.path.exists("correct_interactions_real_sample.zip"):
+    interactions_file_path = "correct_interactions_real_sample.zip"
+elif os.path.exists("correct_interactions_sample.zip"):
+    interactions_file_path = "correct_interactions_sample.zip"
+elif os.path.exists("correct_interactions.zip"):
+    interactions_file_path = "correct_interactions.zip"
 else:
-    interactions_file_path = interactions_file
+    st.error("❌ 상호작용 데이터 파일을 찾을 수 없습니다.")
+    st.stop()
 
 st.divider()
 
@@ -552,12 +510,8 @@ try:
     time.sleep(10)
     debug_placeholder.empty()
     
-    # 실제 데이터 업로드 시 안전장치
-    is_uploaded_data = any([ads_file, users_file, interactions_file])
-    
-    if is_uploaded_data:
-        st.warning("⚠️ 실제 데이터를 업로드했습니다. 로딩에 시간이 걸릴 수 있습니다.")
-        st.info("💡 문제가 발생하면 샘플 데이터를 사용해보세요.")
+    # 샘플 데이터 사용 안내
+    st.info("📊 확장된 샘플 데이터를 사용합니다 (5,000개 광고, 500명 사용자, 10,154개 상호작용)")
     
     with st.spinner("광고 데이터 로딩 중..."):
         try:
@@ -565,8 +519,6 @@ try:
             st.write(f"✅ 광고 데이터 로드 완료: {len(ads_meta)}개")
         except Exception as e:
             st.error(f"❌ 광고 데이터 로드 실패: {e}")
-            if is_uploaded_data:
-                st.error("💡 업로드한 파일에 문제가 있을 수 있습니다. 샘플 데이터를 사용해보세요.")
             st.stop()
     
     with st.spinner("사용자 데이터 로딩 중..."):
@@ -575,20 +527,16 @@ try:
             st.write(f"✅ 사용자 데이터 로드 완료: {len(user_ids)}명")
         except Exception as e:
             st.error(f"❌ 사용자 데이터 로드 실패: {e}")
-            if is_uploaded_data:
-                st.error("💡 업로드한 파일에 문제가 있을 수 있습니다. 샘플 데이터를 사용해보세요.")
             st.stop()
     
     with st.spinner("상호작용 데이터 로딩 중..."):
         try:
             user_interactions = load_interactions_from_user_profile(users_file_path)
-            actual_interactions = load_actual_interactions(interactions_file_path, is_uploaded_data)
+            actual_interactions = load_actual_interactions(interactions_file_path, False)
             detailed_interactions = load_detailed_user_interactions(users_file_path)
             st.write(f"✅ 상호작용 데이터 로드 완료: {len(actual_interactions)}명의 상호작용")
         except Exception as e:
             st.error(f"❌ 상호작용 데이터 로드 실패: {e}")
-            if is_uploaded_data:
-                st.error("💡 업로드한 파일에 문제가 있을 수 있습니다. 샘플 데이터를 사용해보세요.")
             st.stop()
     
     # 데이터 로딩 성공 메시지 (처음 로딩할 때만 표시)
