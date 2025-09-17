@@ -35,7 +35,13 @@ def l2_normalize(mat: np.ndarray, eps: float = 1e-9) -> np.ndarray:
 @st.cache_data(show_spinner=False)
 def load_ads(ads_csv: str):
     # 압축 파일에서 직접 읽기
-    if ads_csv.endswith('.zip'):
+    # UploadedFile 객체인 경우 파일명 확인
+    if hasattr(ads_csv, 'name'):
+        file_name = ads_csv.name
+    else:
+        file_name = str(ads_csv)
+        
+    if file_name.endswith('.zip'):
         with zipfile.ZipFile(ads_csv, 'r') as zip_ref:
             # ZIP 파일 내의 CSV 파일명 찾기
             csv_files = [f for f in zip_ref.namelist() if f.endswith('.csv')]
@@ -138,7 +144,13 @@ def load_actual_interactions(source_file="correct_interactions.zip"):
                     return pickle.load(f)
         
         # 원본 상호작용 데이터 로드 (압축 파일에서 직접 읽기, 샘플링으로 최적화)
-        if source_file.endswith('.zip'):
+        # UploadedFile 객체인 경우 파일명 확인
+        if hasattr(source_file, 'name'):
+            file_name = source_file.name
+        else:
+            file_name = str(source_file)
+            
+        if file_name.endswith('.zip'):
             with zipfile.ZipFile(source_file, 'r') as zip_ref:
                 csv_files = [f for f in zip_ref.namelist() if f.endswith('.csv')]
                 if csv_files:
@@ -279,7 +291,13 @@ def load_detailed_user_interactions(user_csv: str):
 @st.cache_data(show_spinner=False)
 def load_users(user_csv: str, feat_cols_hint: List[str]):
     # 압축 파일에서 직접 읽기
-    if user_csv.endswith('.zip'):
+    # UploadedFile 객체인 경우 파일명 확인
+    if hasattr(user_csv, 'name'):
+        file_name = user_csv.name
+    else:
+        file_name = str(user_csv)
+        
+    if file_name.endswith('.zip'):
         with zipfile.ZipFile(user_csv, 'r') as zip_ref:
             # ZIP 파일 내의 CSV 파일명 찾기
             csv_files = [f for f in zip_ref.namelist() if f.endswith('.csv')]
