@@ -31,22 +31,36 @@ def l2_normalize(mat: np.ndarray, eps: float = 1e-9) -> np.ndarray:
     return mat / norms
 
 def extract_zip_if_needed():
-    """압축 파일이 있으면 해제합니다."""
+    """압축 파일들이 있으면 해제합니다."""
+    # correct_interactions.zip 해제
     zip_file = "correct_interactions.zip"
     target_file = "input/save/correct_interactions.csv"
     
-    # 대상 파일이 이미 있으면 해제하지 않음
-    if os.path.exists(target_file):
-        return
-    
-    # 압축 파일이 있으면 해제
-    if os.path.exists(zip_file):
+    if not os.path.exists(target_file) and os.path.exists(zip_file):
         os.makedirs("input/save", exist_ok=True)
         with zipfile.ZipFile(zip_file, 'r') as zip_ref:
             zip_ref.extractall("input/save/")
-        print(f"✅ 압축 파일 해제 완료: {target_file}")
-    else:
-        print(f"❌ 압축 파일을 찾을 수 없습니다: {zip_file}")
+        print(f"✅ correct_interactions.zip 해제 완료: {target_file}")
+    
+    # ads_profile.zip 해제
+    ads_zip = "ads_profile.zip"
+    ads_target = "preprocessed/ads_profile.csv"
+    
+    if not os.path.exists(ads_target) and os.path.exists(ads_zip):
+        os.makedirs("preprocessed", exist_ok=True)
+        with zipfile.ZipFile(ads_zip, 'r') as zip_ref:
+            zip_ref.extractall("preprocessed/")
+        print(f"✅ ads_profile.zip 해제 완료: {ads_target}")
+    
+    # user_profile.zip 해제
+    user_zip = "user_profile.zip"
+    user_target = "preprocessed/user_profile.csv"
+    
+    if not os.path.exists(user_target) and os.path.exists(user_zip):
+        os.makedirs("preprocessed", exist_ok=True)
+        with zipfile.ZipFile(user_zip, 'r') as zip_ref:
+            zip_ref.extractall("preprocessed/")
+        print(f"✅ user_profile.zip 해제 완료: {user_target}")
 
 @st.cache_data(show_spinner=False)
 def load_ads(ads_csv: str):
