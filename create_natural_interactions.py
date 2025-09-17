@@ -46,16 +46,16 @@ def create_natural_interaction_distribution(n_users: int = 500, n_ads: int = 100
     for i in range(n_users):
         user_id = f"user_{i:06d}"
         
-        # 파레토 분포로 상호작용 수 결정
-        if np.random.random() < 0.2:  # 20%는 활성 사용자
-            # 활성 사용자: 15-50개 상호작용
-            interactions = np.random.randint(15, 51)
-        elif np.random.random() < 0.5:  # 30%는 보통 사용자
-            # 보통 사용자: 5-15개 상호작용
-            interactions = np.random.randint(5, 16)
-        else:  # 50%는 비활성 사용자
-            # 비활성 사용자: 1-5개 상호작용
-            interactions = np.random.randint(1, 6)
+        # 파레토 분포로 상호작용 수 결정 (더 현실적으로)
+        if np.random.random() < 0.1:  # 10%는 활성 사용자
+            # 활성 사용자: 8-15개 상호작용
+            interactions = np.random.randint(8, 16)
+        elif np.random.random() < 0.3:  # 20%는 보통 사용자
+            # 보통 사용자: 3-8개 상호작용
+            interactions = np.random.randint(3, 9)
+        else:  # 70%는 비활성 사용자
+            # 비활성 사용자: 1-3개 상호작용
+            interactions = np.random.randint(1, 4)
         
         user_interactions.append((user_id, interactions))
     
@@ -73,7 +73,7 @@ def create_natural_interaction_distribution(n_users: int = 500, n_ads: int = 100
         
         ad_popularity.append((ad_idx, popularity))
     
-    print(f"✅ 사용자 분포: 활성 {sum(1 for _, count in user_interactions if count >= 15)}명, 보통 {sum(1 for _, count in user_interactions if 5 <= count < 15)}명, 비활성 {sum(1 for _, count in user_interactions if count < 5)}명")
+    print(f"✅ 사용자 분포: 활성 {sum(1 for _, count in user_interactions if count >= 8)}명, 보통 {sum(1 for _, count in user_interactions if 3 <= count < 8)}명, 비활성 {sum(1 for _, count in user_interactions if count < 3)}명")
     print(f"✅ 광고 분포: 인기 {sum(1 for _, pop in ad_popularity if pop >= 8)}개, 보통 {sum(1 for _, pop in ad_popularity if 3 <= pop < 8)}개, 비인기 {sum(1 for _, pop in ad_popularity if pop < 3)}개")
     
     return user_interactions, ad_popularity
