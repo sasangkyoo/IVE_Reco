@@ -37,19 +37,22 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# Data files (too large for GitHub)
-*.csv
+# Data files (too large for GitHub) - but allow LFS tracked files
 *.json
 *.jsonl
 *.pkl
 *.gz
 
-# Keep only essential data files
+# Keep essential data files
 !requirements.txt
 !README.md
 !STREAMLIT_DEPLOYMENT.md
 !correct_interactions.zip
 !extract_data.py
+
+# Allow LFS tracked CSV files
+!preprocessed/*.csv
+!input/save/*.csv
 
 # Streamlit
 .streamlit/
