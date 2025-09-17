@@ -15,11 +15,11 @@ import os
 from typing import Tuple, List, Set
 
 def load_original_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """원본 데이터 로드 (기존 샘플 데이터 사용)"""
+    """원본 데이터 로드 (실제 원본 데이터 사용)"""
     print("📊 원본 데이터 로딩 중...")
     
-    # 광고 데이터 로드 (기존 샘플 데이터 사용)
-    with zipfile.ZipFile("ads_profile_sample.zip", 'r') as zip_ref:
+    # 광고 데이터 로드 (원본 데이터 사용)
+    with zipfile.ZipFile("ads_profile.zip", 'r') as zip_ref:
         with zip_ref.open("ads_profile.csv") as f:
             ads_df = pd.read_csv(f, dtype={
                 'ads_idx': 'int32',
@@ -35,8 +35,8 @@ def load_original_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
                 'ad_conversion_count': 'int32'
             })
     
-    # 사용자 데이터 로드 (기존 샘플 데이터 사용)
-    with zipfile.ZipFile("user_profile_sample.zip", 'r') as zip_ref:
+    # 사용자 데이터 로드 (원본 데이터 사용)
+    with zipfile.ZipFile("user_profile.zip", 'r') as zip_ref:
         with zip_ref.open("user_profile.csv") as f:
             users_df = pd.read_csv(f, dtype={
                 'user_device_id': 'string',
@@ -53,8 +53,8 @@ def load_original_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
                 'total_reward': 'float32'
             })
     
-    # 상호작용 데이터 로드 (기존 샘플 데이터 사용)
-    with zipfile.ZipFile("correct_interactions_sample.zip", 'r') as zip_ref:
+    # 상호작용 데이터 로드 (원본 데이터 사용)
+    with zipfile.ZipFile("correct_interactions.zip", 'r') as zip_ref:
         with zip_ref.open("correct_interactions.csv") as f:
             interactions_df = pd.read_csv(f, dtype={
                 'user_device_id': 'string',
@@ -196,8 +196,8 @@ def main():
     # 상호작용한 광고들의 광고 데이터 추출
     interacted_ads = extract_interacted_ads(ads_df, user_interactions)
     
-    # 추천용 추가 광고 선택
-    additional_ads = add_recommendation_ads(ads_df, interacted_ads, n_additional=500)
+    # 추천용 추가 광고 선택 (5,000개)
+    additional_ads = add_recommendation_ads(ads_df, interacted_ads, n_additional=5000)
     
     # 샘플 데이터 생성
     sample_users = create_sample_users(users_df, selected_users, user_interactions)
