@@ -453,31 +453,43 @@ with col3:
         key="interactions_upload"
     )
 
-# 기본 파일 경로 설정 (Streamlit Cloud 호환성)
+# 기본 파일 경로 설정 (샘플 데이터 우선 사용)
 if ads_file is None:
-    # Streamlit Cloud에서 기본 파일이 있는지 확인
-    if os.path.exists("ads_profile.zip"):
+    # 샘플 데이터가 있으면 우선 사용, 없으면 원본 데이터 사용
+    if os.path.exists("ads_profile_sample.zip"):
+        ads_file_path = "ads_profile_sample.zip"
+        st.info("📊 샘플 광고 데이터를 사용합니다 (1,000개 광고)")
+    elif os.path.exists("ads_profile.zip"):
         ads_file_path = "ads_profile.zip"
+        st.info("📊 원본 광고 데이터를 사용합니다")
     else:
-        st.error("❌ ads_profile.zip 파일을 찾을 수 없습니다. 파일을 업로드해주세요.")
+        st.error("❌ 광고 데이터 파일을 찾을 수 없습니다. 파일을 업로드해주세요.")
         st.stop()
 else:
     ads_file_path = ads_file
 
 if users_file is None:
-    if os.path.exists("user_profile.zip"):
+    if os.path.exists("user_profile_sample.zip"):
+        users_file_path = "user_profile_sample.zip"
+        st.info("👥 샘플 사용자 데이터를 사용합니다 (500명)")
+    elif os.path.exists("user_profile.zip"):
         users_file_path = "user_profile.zip"
+        st.info("👥 원본 사용자 데이터를 사용합니다")
     else:
-        st.error("❌ user_profile.zip 파일을 찾을 수 없습니다. 파일을 업로드해주세요.")
+        st.error("❌ 사용자 데이터 파일을 찾을 수 없습니다. 파일을 업로드해주세요.")
         st.stop()
 else:
     users_file_path = users_file
 
 if interactions_file is None:
-    if os.path.exists("correct_interactions.zip"):
+    if os.path.exists("correct_interactions_sample.zip"):
+        interactions_file_path = "correct_interactions_sample.zip"
+        st.info("🔄 샘플 상호작용 데이터를 사용합니다 (10,000개)")
+    elif os.path.exists("correct_interactions.zip"):
         interactions_file_path = "correct_interactions.zip"
+        st.info("🔄 원본 상호작용 데이터를 사용합니다")
     else:
-        st.error("❌ correct_interactions.zip 파일을 찾을 수 없습니다. 파일을 업로드해주세요.")
+        st.error("❌ 상호작용 데이터 파일을 찾을 수 없습니다. 파일을 업로드해주세요.")
         st.stop()
 else:
     interactions_file_path = interactions_file
