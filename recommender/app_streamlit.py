@@ -138,17 +138,36 @@ def load_actual_interactions():
                 with open(cache_file, 'rb') as f:
                     return pickle.load(f)
         
-        # 원본 상호작용 데이터 로드 (압축 파일에서 직접 읽기)
+        # 원본 상호작용 데이터 로드 (압축 파일에서 직접 읽기, 샘플링으로 최적화)
         if source_file.endswith('.zip'):
             with zipfile.ZipFile(source_file, 'r') as zip_ref:
                 csv_files = [f for f in zip_ref.namelist() if f.endswith('.csv')]
                 if csv_files:
                     with zip_ref.open(csv_files[0]) as f:
-                        interactions_df = pd.read_csv(f)
+                        # 대용량 데이터를 위해 샘플링 (10%만 사용)
+                        interactions_df = pd.read_csv(f, dtype={
+                            'user_device_id': 'string',
+                            'ads_idx': 'int32',
+                            'interaction_type': 'string',
+                            'rwd_price': 'float32',
+                            'reward_point': 'float32'
+                        }, low_memory=False)
+                        # 10% 샘플링으로 메모리 사용량 감소
+                        if len(interactions_df) > 100000:
+                            interactions_df = interactions_df.sample(frac=0.1, random_state=42)
                 else:
                     raise FileNotFoundError(f"No CSV file found in {source_file}")
         else:
-            interactions_df = pd.read_csv(source_file)
+            interactions_df = pd.read_csv(source_file, dtype={
+                'user_device_id': 'string',
+                'ads_idx': 'int32',
+                'interaction_type': 'string',
+                'rwd_price': 'float32',
+                'reward_point': 'float32'
+            }, low_memory=False)
+            # 10% 샘플링으로 메모리 사용량 감소
+            if len(interactions_df) > 100000:
+                interactions_df = interactions_df.sample(frac=0.1, random_state=42)
         
         # user_device_id 컬럼이 있으면 사용, 없으면 user_ip 사용
         if 'user_device_id' in interactions_df.columns:
