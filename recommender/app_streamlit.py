@@ -499,58 +499,20 @@ st.divider()
 # 데이터 로드
 try:
     # 파일 경로 디버깅 정보 (10초 후 자동 사라짐)
-    debug_placeholder = st.empty()
-    with debug_placeholder.container():
-        st.write(f"🔍 디버깅: 광고 파일 경로: {ads_file_path}")
-        st.write(f"🔍 디버깅: 사용자 파일 경로: {users_file_path}")
-        st.write(f"🔍 디버깅: 상호작용 파일 경로: {interactions_file_path}")
+    # 디버깅 정보 제거됨
     
-    # 10초 후 디버깅 정보 제거
-    import time
-    time.sleep(10)
-    debug_placeholder.empty()
+    # 데이터 로딩 (조용히)
+    try:
+        A, feat_cols_ads, ads_meta = load_ads(ads_file_path)
+        U, user_ids, id_to_row, feat_cols_user, interaction_info = load_users(users_file_path, feat_cols_ads)
+        user_interactions = load_interactions_from_user_profile(users_file_path)
+        actual_interactions = load_actual_interactions(interactions_file_path, False)
+        detailed_interactions = load_detailed_user_interactions(users_file_path)
+    except Exception as e:
+        st.error(f"❌ 데이터 로드 실패: {e}")
+        st.stop()
     
-    # 샘플 데이터 사용 안내
-    st.info("📊 확장된 샘플 데이터를 사용합니다 (5,000개 광고, 500명 사용자, 10,154개 상호작용)")
-    
-    with st.spinner("광고 데이터 로딩 중..."):
-        try:
-            A, feat_cols_ads, ads_meta = load_ads(ads_file_path)
-            st.write(f"✅ 광고 데이터 로드 완료: {len(ads_meta)}개")
-        except Exception as e:
-            st.error(f"❌ 광고 데이터 로드 실패: {e}")
-            st.stop()
-    
-    with st.spinner("사용자 데이터 로딩 중..."):
-        try:
-            U, user_ids, id_to_row, feat_cols_user, interaction_info = load_users(users_file_path, feat_cols_ads)
-            st.write(f"✅ 사용자 데이터 로드 완료: {len(user_ids)}명")
-        except Exception as e:
-            st.error(f"❌ 사용자 데이터 로드 실패: {e}")
-            st.stop()
-    
-    with st.spinner("상호작용 데이터 로딩 중..."):
-        try:
-            user_interactions = load_interactions_from_user_profile(users_file_path)
-            actual_interactions = load_actual_interactions(interactions_file_path, False)
-            detailed_interactions = load_detailed_user_interactions(users_file_path)
-            st.write(f"✅ 상호작용 데이터 로드 완료: {len(actual_interactions)}명의 상호작용")
-        except Exception as e:
-            st.error(f"❌ 상호작용 데이터 로드 실패: {e}")
-            st.stop()
-    
-    # 데이터 로딩 성공 메시지 (처음 로딩할 때만 표시)
-    if "data_loaded_successfully" not in st.session_state:
-        success_placeholder = st.empty()
-        success_placeholder.success("✅ 모든 데이터가 성공적으로 로드되었습니다!")
-        
-        # 10초 후 메시지 제거
-        import time
-        time.sleep(10)
-        success_placeholder.empty()
-        
-        # 세션 상태에 성공 표시 저장
-        st.session_state["data_loaded_successfully"] = True
+    # 데이터 로딩 완료 (조용히)
     
 except Exception as e:
     st.error(f"❌ 데이터 로딩 오류: {e}")
