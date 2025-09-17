@@ -525,10 +525,17 @@ st.divider()
 
 # 데이터 로드
 try:
-    # 파일 경로 디버깅 정보
-    st.write(f"🔍 디버깅: 광고 파일 경로: {ads_file_path}")
-    st.write(f"🔍 디버깅: 사용자 파일 경로: {users_file_path}")
-    st.write(f"🔍 디버깅: 상호작용 파일 경로: {interactions_file_path}")
+    # 파일 경로 디버깅 정보 (10초 후 자동 사라짐)
+    debug_placeholder = st.empty()
+    with debug_placeholder.container():
+        st.write(f"🔍 디버깅: 광고 파일 경로: {ads_file_path}")
+        st.write(f"🔍 디버깅: 사용자 파일 경로: {users_file_path}")
+        st.write(f"🔍 디버깅: 상호작용 파일 경로: {interactions_file_path}")
+    
+    # 10초 후 디버깅 정보 제거
+    import time
+    time.sleep(10)
+    debug_placeholder.empty()
     
     with st.spinner("광고 데이터 로딩 중..."):
         A, feat_cols_ads, ads_meta = load_ads(ads_file_path)
