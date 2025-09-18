@@ -763,9 +763,11 @@ if run:
         
         with col2:
             st.markdown("**📊 카테고리 분포**")
-            # 카테고리 분포를 세로 막대 차트로 표시 (세로 방향)
+            # 카테고리 분포를 세로 막대 차트로 표시 (숫자로 표시)
+            # 원본 숫자 카테고리 사용
+            cat_counts = rec["광고카테고리"].value_counts().sort_index()
             cat_data = pd.DataFrame({
-                "개수": rec["광고카테고리"].value_counts().sort_index()
+                "개수": cat_counts
             })
             st.bar_chart(cat_data, use_container_width=True, height=300)
         
@@ -876,7 +878,7 @@ if run:
             relative_ranks.append(percentile)
         detailed_df["상대순위(%)"] = relative_ranks
         
-        # 타입과 카테고리를 이름으로 변환
+        # 타입과 카테고리를 이름으로 변환 (테이블 표시용)
         detailed_df["광고타입"] = detailed_df["광고타입"].apply(get_type_name)
         detailed_df["광고카테고리"] = detailed_df["광고카테고리"].apply(get_category_name)
         
