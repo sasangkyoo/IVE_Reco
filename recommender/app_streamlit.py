@@ -425,6 +425,9 @@ def recommend_for_user(
     sel["final_score"] = scores[idx].astype(np.float32)
     # 출력 열 정돈 (ads_name 추가)
     result = sel[["rank","ads_idx","ads_code","ads_name","ads_type","ads_category","final_score"]].copy()
+    # 타입과 카테고리를 이름으로 변환
+    result["ads_type"] = result["ads_type"].apply(get_type_name)
+    result["ads_category"] = result["ads_category"].apply(get_category_name)
     # 컬럼명을 한국어로 변경
     result.columns = ["순위", "광고인덱스", "광고코드", "광고명", "광고타입", "광고카테고리", "최종점수"]
     return result
@@ -752,19 +755,19 @@ if run:
         
         with col1:
             st.markdown("**📈 추천 광고별 유사도**")
-            # 유사도를 세로 막대 차트로 표시
+            # 유사도를 세로 막대 차트로 표시 (세로 방향)
             sim_data = pd.DataFrame({
                 "유사도": similarities
             }, index=rec["순위"])
-            st.bar_chart(sim_data, use_container_width=True)
+            st.bar_chart(sim_data, use_container_width=True, height=300)
         
         with col2:
             st.markdown("**📊 카테고리 분포**")
-            # 카테고리 분포를 세로 막대 차트로 표시
+            # 카테고리 분포를 세로 막대 차트로 표시 (세로 방향)
             cat_data = pd.DataFrame({
                 "개수": rec["광고카테고리"].value_counts().sort_index()
             })
-            st.bar_chart(cat_data, use_container_width=True)
+            st.bar_chart(cat_data, use_container_width=True, height=300)
         
         # 유사도 통계
         st.markdown("**📋 유사도 분석**")
@@ -872,6 +875,10 @@ if run:
             percentile = (1 - (rank - 1) / len(detailed_df)) * 100
             relative_ranks.append(percentile)
         detailed_df["상대순위(%)"] = relative_ranks
+        
+        # 타입과 카테고리를 이름으로 변환
+        detailed_df["광고타입"] = detailed_df["광고타입"].apply(get_type_name)
+        detailed_df["광고카테고리"] = detailed_df["광고카테고리"].apply(get_category_name)
         
         # 최종 테이블 구성
         detailed_df = detailed_df[["순위", "광고코드", "광고명", "광고타입", "광고카테고리", 
