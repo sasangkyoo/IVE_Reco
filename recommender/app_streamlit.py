@@ -171,10 +171,10 @@ def load_interactions_from_user_profile(user_csv: str):
 
 @st.cache_data(show_spinner=False)
 def load_actual_interactions():
-    """실제 상호작용 데이터 로드 (원본 데이터)"""
+    """실제 상호작용 데이터 로드 (샘플 데이터)"""
     try:
         cache_file = "actual_interactions_cache.pkl"
-        source_file = "input/save/correct_interactions.csv"
+        source_file = "correct_interactions_sample.zip"
         
         if os.path.exists(cache_file) and os.path.exists(source_file):
             cache_time = os.path.getmtime(cache_file)
@@ -183,8 +183,18 @@ def load_actual_interactions():
                 with open(cache_file, 'rb') as f:
                     return pickle.load(f)
         
-        # 원본 상호작용 데이터 로드
-        interactions_df = pd.read_csv(source_file)
+        # 샘플 상호작용 데이터 로드 (ZIP 파일에서)
+        with zipfile.ZipFile(source_file, 'r') as zip_ref:
+            # ZIP 파일 내부의 CSV 파일명 확인
+            csv_files = [f for f in zip_ref.namelist() if f.endswith('.csv')]
+            if not csv_files:
+                st.warning("ZIP 파일에서 CSV 파일을 찾을 수 없습니다.")
+                return {}
+            
+            # 첫 번째 CSV 파일 사용
+            csv_file = csv_files[0]
+            with zip_ref.open(csv_file) as f:
+                interactions_df = pd.read_csv(f)
         
         # user_device_id 컬럼이 있으면 사용, 없으면 user_ip 사용
         if 'user_device_id' in interactions_df.columns:
