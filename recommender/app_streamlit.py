@@ -841,12 +841,17 @@ if run:
                 if ad_type is not None:
                     type_counts[ad_type] = type_counts.get(ad_type, 0) + 1
             
-            # 선호도 점수 계산 (0~1 범위로 정규화)
+            # 선호도 점수 계산 (0.3~1.0 범위로 정규화)
+            # 최소 선호도: 타입 0.4, 카테고리 0.3
             for cat, count in cat_counts.items():
-                user_cat_prefs[cat] = min(count / max(total_interactions, 1), 1.0)
+                # 카테고리 선호도: 0.3 + (상호작용 비율 * 0.7)
+                interaction_ratio = count / max(total_interactions, 1)
+                user_cat_prefs[cat] = 0.3 + (interaction_ratio * 0.7)
             
             for ad_type, count in type_counts.items():
-                user_type_prefs[ad_type] = min(count / max(total_interactions, 1), 1.0)
+                # 타입 선호도: 0.4 + (상호작용 비율 * 0.6)
+                interaction_ratio = count / max(total_interactions, 1)
+                user_type_prefs[ad_type] = 0.4 + (interaction_ratio * 0.6)
         
         # 원본 숫자 데이터로 선호도 계산 (매핑 전 데이터 사용)
         for _, row in detailed_df.iterrows():
@@ -863,21 +868,21 @@ if run:
                 if original_category in user_cat_prefs:
                     cat_pref = user_cat_prefs[original_category]
                 else:
-                    # 상호작용하지 않은 카테고리는 낮은 선호도 (0.1~0.3 범위)
-                    cat_pref = 0.2
+                    # 상호작용하지 않은 카테고리는 최소 선호도
+                    cat_pref = 0.3
                 category_preferences.append(cat_pref)
                 
                 # 타입 선호도 (실제 상호작용 빈도 기반)
                 if original_type in user_type_prefs:
                     type_pref = user_type_prefs[original_type]
                 else:
-                    # 상호작용하지 않은 타입은 낮은 선호도 (0.1~0.3 범위)
-                    type_pref = 0.2
+                    # 상호작용하지 않은 타입은 최소 선호도
+                    type_pref = 0.4
                 type_preferences.append(type_pref)
             else:
-                # 광고를 찾을 수 없는 경우 기본값
-                category_preferences.append(0.2)
-                type_preferences.append(0.2)
+                # 광고를 찾을 수 없는 경우 최소 선호도
+                category_preferences.append(0.3)
+                type_preferences.append(0.4)
         
         detailed_df["카테고리선호도"] = category_preferences
         detailed_df["타입선호도"] = type_preferences
