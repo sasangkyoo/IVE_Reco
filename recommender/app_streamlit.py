@@ -523,7 +523,12 @@ if run:
             st.markdown("**👤 사용자 상호작용 정보**")
             col1, col2, col3, col4 = st.columns(4)
             with col1:
-                st.metric("총 상호작용", user_info["total_interactions"])
+                # 실제 상호작용 데이터가 있으면 실제 총 상호작용 수 계산
+                if uid_input in actual_interactions and actual_interactions[uid_input]:
+                    total_interactions_count = len(actual_interactions[uid_input])
+                    st.metric("총 상호작용", total_interactions_count)
+                else:
+                    st.metric("총 상호작용", user_info["total_interactions"])
             with col2:
                 # 실제 상호작용 데이터가 있으면 실제 고유 광고 수 계산
                 if uid_input in actual_interactions and actual_interactions[uid_input]:
@@ -727,7 +732,17 @@ if run:
         
         # 추천된 광고들의 피처 벡터
         rec_ads_idx = rec["광고인덱스"].values
-        rec_ads_features = A[rec_ads_idx]
+        # 광고 인덱스를 배열 인덱스로 변환
+        rec_ads_features = []
+        for ads_idx in rec_ads_idx:
+            # ads_meta에서 해당 광고의 행 인덱스 찾기
+            ad_row_idx = ads_meta[ads_meta['ads_idx'] == ads_idx].index
+            if len(ad_row_idx) > 0:
+                rec_ads_features.append(A[ad_row_idx[0]])
+            else:
+                # 광고를 찾을 수 없으면 0 벡터 사용
+                rec_ads_features.append(np.zeros(A.shape[1]))
+        rec_ads_features = np.array(rec_ads_features)
         
         # 사용자 선호도와 각 추천 광고의 유사도 계산
         similarities = (user_vector @ rec_ads_features.T).flatten()
