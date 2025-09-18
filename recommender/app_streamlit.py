@@ -764,7 +764,7 @@ if run:
         with col2:
             st.markdown("**📊 카테고리 분포**")
             # 카테고리 분포를 세로 막대 차트로 표시 (숫자로 표시)
-            # 원본 숫자 카테고리 사용
+            # 원본 숫자 카테고리 사용 (매핑 전 원본 데이터 사용)
             cat_counts = rec["광고카테고리"].value_counts().sort_index()
             cat_data = pd.DataFrame({
                 "개수": cat_counts
@@ -848,24 +848,36 @@ if run:
             for ad_type, count in type_counts.items():
                 user_type_prefs[ad_type] = min(count / max(total_interactions, 1), 1.0)
         
+        # 원본 숫자 데이터로 선호도 계산 (매핑 전 데이터 사용)
         for _, row in detailed_df.iterrows():
-            # 카테고리 선호도 (실제 상호작용 빈도 기반)
-            category = row["광고카테고리"]
-            if category in user_cat_prefs:
-                cat_pref = user_cat_prefs[category]
-            else:
-                # 상호작용하지 않은 카테고리는 낮은 선호도 (0.1~0.3 범위)
-                cat_pref = 0.2
-            category_preferences.append(cat_pref)
+            # 원본 광고 데이터에서 타입과 카테고리 가져오기
+            ads_idx = row["광고인덱스"]
+            ad_row = ads_meta[ads_meta['ads_idx'] == ads_idx]
             
-            # 타입 선호도 (실제 상호작용 빈도 기반)
-            ad_type = row["광고타입"]
-            if ad_type in user_type_prefs:
-                type_pref = user_type_prefs[ad_type]
+            if not ad_row.empty:
+                # 원본 숫자 타입과 카테고리 사용
+                original_type = ad_row.iloc[0]['ads_type']
+                original_category = ad_row.iloc[0]['ads_category']
+                
+                # 카테고리 선호도 (실제 상호작용 빈도 기반)
+                if original_category in user_cat_prefs:
+                    cat_pref = user_cat_prefs[original_category]
+                else:
+                    # 상호작용하지 않은 카테고리는 낮은 선호도 (0.1~0.3 범위)
+                    cat_pref = 0.2
+                category_preferences.append(cat_pref)
+                
+                # 타입 선호도 (실제 상호작용 빈도 기반)
+                if original_type in user_type_prefs:
+                    type_pref = user_type_prefs[original_type]
+                else:
+                    # 상호작용하지 않은 타입은 낮은 선호도 (0.1~0.3 범위)
+                    type_pref = 0.2
+                type_preferences.append(type_pref)
             else:
-                # 상호작용하지 않은 타입은 낮은 선호도 (0.1~0.3 범위)
-                type_pref = 0.2
-            type_preferences.append(type_pref)
+                # 광고를 찾을 수 없는 경우 기본값
+                category_preferences.append(0.2)
+                type_preferences.append(0.2)
         
         detailed_df["카테고리선호도"] = category_preferences
         detailed_df["타입선호도"] = type_preferences
@@ -878,9 +890,9 @@ if run:
             relative_ranks.append(percentile)
         detailed_df["상대순위(%)"] = relative_ranks
         
-        # 타입과 카테고리를 이름으로 변환 (테이블 표시용)
-        detailed_df["광고타입"] = detailed_df["광고타입"].apply(get_type_name)
-        detailed_df["광고카테고리"] = detailed_df["광고카테고리"].apply(get_category_name)
+        # 타입과 카테고리를 이름으로 변환 (테이블 표시용, 접두사 제거)
+        detailed_df["광고타입"] = detailed_df["광고타입"].apply(lambda x: get_type_name(x).replace("타입", ""))
+        detailed_df["광고카테고리"] = detailed_df["광고카테고리"].apply(lambda x: get_category_name(x).replace("카테고리", ""))
         
         # 최종 테이블 구성
         detailed_df = detailed_df[["순위", "광고코드", "광고명", "광고타입", "광고카테고리", 
