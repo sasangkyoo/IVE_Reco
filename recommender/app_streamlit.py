@@ -819,8 +819,8 @@ if run:
         user_type_prefs = {}
         
         # 실제 상호작용 데이터에서 선호도 계산
-        if uid_input in user_actual_interactions:
-            user_ads = user_actual_interactions[uid_input]
+        if uid_input in actual_interactions:
+            user_ads = actual_interactions[uid_input]
             
             # 카테고리별 상호작용 빈도 계산
             cat_counts = {}
