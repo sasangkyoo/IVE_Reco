@@ -763,9 +763,10 @@ if run:
             })
             fig = px.bar(sim_data, x="순위", y="유사도", title="추천 광고별 유사도")
             fig.update_layout(
-                xaxis_tickangle=-90,  # X축 레이블을 90도 회전
+                xaxis_tickangle=90,  # X축 레이블을 90도 회전
                 height=300,
-                showlegend=False
+                showlegend=False,
+                xaxis=dict(tickangle=90)  # 추가 설정
             )
             st.plotly_chart(fig, use_container_width=True)
         
@@ -788,9 +789,10 @@ if run:
             })
             fig = px.bar(cat_data, x="카테고리", y="개수", title="카테고리 분포")
             fig.update_layout(
-                xaxis_tickangle=-90,  # X축 레이블을 90도 회전
+                xaxis_tickangle=90,  # X축 레이블을 90도 회전
                 height=300,
-                showlegend=False
+                showlegend=False,
+                xaxis=dict(tickangle=90)  # 추가 설정
             )
             st.plotly_chart(fig, use_container_width=True)
         
