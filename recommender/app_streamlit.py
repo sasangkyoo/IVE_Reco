@@ -755,15 +755,23 @@ if run:
         
         with col1:
             st.markdown("**📈 추천 광고별 유사도**")
-            # 유사도를 세로 막대 차트로 표시 (세로 방향)
+            # 유사도를 세로 막대 차트로 표시 (X축 레이블 세로 회전)
+            import plotly.express as px
             sim_data = pd.DataFrame({
+                "순위": rec["순위"],
                 "유사도": similarities
-            }, index=rec["순위"])
-            st.bar_chart(sim_data, use_container_width=True, height=300)
+            })
+            fig = px.bar(sim_data, x="순위", y="유사도", title="추천 광고별 유사도")
+            fig.update_layout(
+                xaxis_tickangle=-90,  # X축 레이블을 90도 회전
+                height=300,
+                showlegend=False
+            )
+            st.plotly_chart(fig, use_container_width=True)
         
         with col2:
             st.markdown("**📊 카테고리 분포**")
-            # 카테고리 분포를 세로 막대 차트로 표시 (숫자로 표시)
+            # 카테고리 분포를 세로 막대 차트로 표시 (X축 레이블 세로 회전)
             # 원본 숫자 카테고리 사용 (매핑 전 원본 데이터 사용)
             cat_counts = {}
             for _, row in rec.iterrows():
@@ -775,9 +783,16 @@ if run:
             
             # 숫자 카테고리로 정렬하여 차트 생성
             cat_data = pd.DataFrame({
+                "카테고리": sorted(cat_counts.keys()),
                 "개수": [cat_counts.get(cat, 0) for cat in sorted(cat_counts.keys())]
-            }, index=sorted(cat_counts.keys()))
-            st.bar_chart(cat_data, use_container_width=True, height=300)
+            })
+            fig = px.bar(cat_data, x="카테고리", y="개수", title="카테고리 분포")
+            fig.update_layout(
+                xaxis_tickangle=-90,  # X축 레이블을 90도 회전
+                height=300,
+                showlegend=False
+            )
+            st.plotly_chart(fig, use_container_width=True)
         
         # 유사도 통계
         st.markdown("**📋 유사도 분석**")
