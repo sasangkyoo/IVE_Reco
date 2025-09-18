@@ -435,7 +435,11 @@ def recommend_for_user(
 # -----------------------------
 # UI
 # -----------------------------
-st.set_page_config(page_title="추천 시스템", layout="wide")
+st.set_page_config(
+    page_title="추천 시스템", 
+    layout="wide",
+    page_icon="icon/1-794df7f8.ico"
+)
 st.title("🎯 콘텐츠 기반 추천 시스템")
 
 with st.sidebar:
