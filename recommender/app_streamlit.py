@@ -849,17 +849,18 @@ if run:
                 if ad_type is not None:
                     type_counts[ad_type] = type_counts.get(ad_type, 0) + 1
             
-            # 선호도 점수 계산 (0.3~1.0 범위로 정규화)
+            # 선호도 점수 계산 (타입 0.4~0.8, 카테고리 0.3~0.8 범위로 정규화)
             # 최소 선호도: 타입 0.4, 카테고리 0.3
+            # 최대 선호도: 타입 0.8, 카테고리 0.8
             for cat, count in cat_counts.items():
-                # 카테고리 선호도: 0.3 + (상호작용 비율 * 0.7)
+                # 카테고리 선호도: 0.3 + (상호작용 비율 * 0.5)
                 interaction_ratio = count / max(total_interactions, 1)
-                user_cat_prefs[cat] = 0.3 + (interaction_ratio * 0.7)
+                user_cat_prefs[cat] = 0.3 + (interaction_ratio * 0.5)
             
             for ad_type, count in type_counts.items():
-                # 타입 선호도: 0.4 + (상호작용 비율 * 0.6)
+                # 타입 선호도: 0.4 + (상호작용 비율 * 0.4)
                 interaction_ratio = count / max(total_interactions, 1)
-                user_type_prefs[ad_type] = 0.4 + (interaction_ratio * 0.6)
+                user_type_prefs[ad_type] = 0.4 + (interaction_ratio * 0.4)
         
         # 원본 숫자 데이터로 선호도 계산 (매핑 전 데이터 사용)
         for _, row in detailed_df.iterrows():
