@@ -765,10 +765,18 @@ if run:
             st.markdown("**📊 카테고리 분포**")
             # 카테고리 분포를 세로 막대 차트로 표시 (숫자로 표시)
             # 원본 숫자 카테고리 사용 (매핑 전 원본 데이터 사용)
-            cat_counts = rec["광고카테고리"].value_counts().sort_index()
+            cat_counts = {}
+            for _, row in rec.iterrows():
+                ads_idx = row["광고인덱스"]
+                ad_row = ads_meta[ads_meta['ads_idx'] == ads_idx]
+                if not ad_row.empty:
+                    original_category = ad_row.iloc[0]['ads_category']
+                    cat_counts[original_category] = cat_counts.get(original_category, 0) + 1
+            
+            # 숫자 카테고리로 정렬하여 차트 생성
             cat_data = pd.DataFrame({
-                "개수": cat_counts
-            })
+                "개수": [cat_counts.get(cat, 0) for cat in sorted(cat_counts.keys())]
+            }, index=sorted(cat_counts.keys()))
             st.bar_chart(cat_data, use_container_width=True, height=300)
         
         # 유사도 통계
