@@ -436,7 +436,7 @@ def recommend_for_user(
 # UI
 # -----------------------------
 st.set_page_config(
-    page_title="추천 시스템", 
+    page_title="IVE 추천 시스템", 
     layout="wide",
     page_icon="icon/1-794df7f8.ico"
 )
