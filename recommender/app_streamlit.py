@@ -70,28 +70,27 @@ def l2_normalize(mat: np.ndarray, eps: float = 1e-9) -> np.ndarray:
     norms = np.maximum(norms, eps)
     return mat / norms
 
-# 압축 해제 기능 제거 - 압축 파일을 직접 사용
+def extract_zip_if_needed():
+    """압축 파일이 있으면 해제합니다."""
+    zip_file = "correct_interactions.zip"
+    target_file = "input/save/correct_interactions.csv"
+    
+    # 대상 파일이 이미 있으면 해제하지 않음
+    if os.path.exists(target_file):
+        return
+    
+    # 압축 파일이 있으면 해제
+    if os.path.exists(zip_file):
+        os.makedirs("input/save", exist_ok=True)
+        with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+            zip_ref.extractall("input/save/")
+        print(f"✅ 압축 파일 해제 완료: {target_file}")
+    else:
+        print(f"❌ 압축 파일을 찾을 수 없습니다: {zip_file}")
 
 @st.cache_data(show_spinner=False)
 def load_ads(ads_csv: str):
-    # 압축 파일에서 직접 읽기
-    # UploadedFile 객체인 경우 파일명 확인
-    if hasattr(ads_csv, 'name'):
-        file_name = ads_csv.name
-    else:
-        file_name = str(ads_csv)
-        
-    if file_name.endswith('.zip'):
-        with zipfile.ZipFile(ads_csv, 'r') as zip_ref:
-            # ZIP 파일 내의 CSV 파일명 찾기
-            csv_files = [f for f in zip_ref.namelist() if f.endswith('.csv')]
-            if csv_files:
-                with zip_ref.open(csv_files[0]) as f:
-                    df = pd.read_csv(f)
-            else:
-                raise FileNotFoundError(f"No CSV file found in {ads_csv}")
-    else:
-        df = pd.read_csv(ads_csv)
+    df = pd.read_csv(ads_csv)
     feat_cols = infer_feature_cols(df)
     meta_cols = ["ads_idx", "ads_code", "ads_type", "ads_category", "ads_name"]
     for c in meta_cols:
@@ -171,10 +170,11 @@ def load_interactions_from_user_profile(user_csv: str):
 
 
 @st.cache_data(show_spinner=False)
-def load_actual_interactions(source_file="correct_interactions.zip", is_uploaded_data=False):
+def load_actual_interactions():
     """실제 상호작용 데이터 로드 (원본 데이터)"""
     try:
         cache_file = "actual_interactions_cache.pkl"
+        source_file = "input/save/correct_interactions.csv"
         
         if os.path.exists(cache_file) and os.path.exists(source_file):
             cache_time = os.path.getmtime(cache_file)
@@ -183,45 +183,8 @@ def load_actual_interactions(source_file="correct_interactions.zip", is_uploaded
                 with open(cache_file, 'rb') as f:
                     return pickle.load(f)
         
-        # 원본 상호작용 데이터 로드 (압축 파일에서 직접 읽기, 샘플링으로 최적화)
-        # UploadedFile 객체인 경우 파일명 확인
-        if hasattr(source_file, 'name'):
-            file_name = source_file.name
-        else:
-            file_name = str(source_file)
-            
-        if file_name.endswith('.zip'):
-            with zipfile.ZipFile(source_file, 'r') as zip_ref:
-                csv_files = [f for f in zip_ref.namelist() if f.endswith('.csv')]
-                if csv_files:
-                    with zip_ref.open(csv_files[0]) as f:
-                        # 대용량 데이터를 위해 샘플링 (10%만 사용)
-                        interactions_df = pd.read_csv(f, dtype={
-                            'user_device_id': 'string',
-                            'ads_idx': 'int32',
-                            'interaction_type': 'string',
-                            'rwd_price': 'float32',
-                            'reward_point': 'float32'
-                        }, low_memory=False)
-                        # 실제 데이터 업로드 시 더 작은 샘플링 적용
-                        if is_uploaded_data and len(interactions_df) > 50000:
-                            interactions_df = interactions_df.sample(n=50000, random_state=42)
-                            st.info(f"📊 대용량 데이터로 인해 50,000개로 샘플링했습니다.")
-                        elif len(interactions_df) > 100000:
-                            interactions_df = interactions_df.sample(n=100000, random_state=42)
-                else:
-                    raise FileNotFoundError(f"No CSV file found in {source_file}")
-        else:
-            interactions_df = pd.read_csv(source_file, dtype={
-                'user_device_id': 'string',
-                'ads_idx': 'int32',
-                'interaction_type': 'string',
-                'rwd_price': 'float32',
-                'reward_point': 'float32'
-            }, low_memory=False)
-            # 100,000행으로 제한하여 메모리 사용량 감소
-            if len(interactions_df) > 100000:
-                interactions_df = interactions_df.sample(n=100000, random_state=42)
+        # 원본 상호작용 데이터 로드
+        interactions_df = pd.read_csv(source_file)
         
         # user_device_id 컬럼이 있으면 사용, 없으면 user_ip 사용
         if 'user_device_id' in interactions_df.columns:
@@ -333,24 +296,7 @@ def load_detailed_user_interactions(user_csv: str):
 
 @st.cache_data(show_spinner=False)
 def load_users(user_csv: str, feat_cols_hint: List[str]):
-    # 압축 파일에서 직접 읽기
-    # UploadedFile 객체인 경우 파일명 확인
-    if hasattr(user_csv, 'name'):
-        file_name = user_csv.name
-    else:
-        file_name = str(user_csv)
-        
-    if file_name.endswith('.zip'):
-        with zipfile.ZipFile(user_csv, 'r') as zip_ref:
-            # ZIP 파일 내의 CSV 파일명 찾기
-            csv_files = [f for f in zip_ref.namelist() if f.endswith('.csv')]
-            if csv_files:
-                with zip_ref.open(csv_files[0]) as f:
-                    df = pd.read_csv(f, dtype={"user_device_id": str})
-            else:
-                raise FileNotFoundError(f"No CSV file found in {user_csv}")
-    else:
-        df = pd.read_csv(user_csv, dtype={"user_device_id": str})
+    df = pd.read_csv(user_csv, dtype={"user_device_id": str})
     if "user_device_id" not in df.columns:
         raise ValueError("사용자 CSV에 'user_device_id' 컬럼이 없습니다.")
     
@@ -443,17 +389,7 @@ def recommend_for_user(
     base_bonus = 0.05  # 기본 보너스 값
     type_category_bonus = base_bonus  # 향후 동적 계산으로 확장 가능
     
-    # 안전한 인덱스 접근을 위해 ads_meta 길이 확인
-    if len(ads_meta) != len(scores):
-        st.error(f"❌ 데이터 불일치: 광고 메타데이터 {len(ads_meta)}개 vs 점수 배열 {len(scores)}개")
-        st.stop()
-    
-    # ads_meta의 인덱스를 scores 배열 인덱스와 매칭
     for i, (_, ad_row) in enumerate(ads_meta.iterrows()):
-        # 인덱스 범위 체크
-        if i >= len(scores):
-            break
-            
         ad_type = ad_row['ads_type']
         ad_category = ad_row['ads_category']
         
@@ -479,11 +415,6 @@ def recommend_for_user(
     sel["final_score"] = scores[idx].astype(np.float32)
     # 출력 열 정돈 (ads_name 추가)
     result = sel[["rank","ads_idx","ads_code","ads_name","ads_type","ads_category","final_score"]].copy()
-    
-    # 타입과 카테고리를 실제 이름으로 변환
-    result["ads_type"] = result["ads_type"].apply(get_type_name)
-    result["ads_category"] = result["ads_category"].apply(get_category_name)
-    
     # 컬럼명을 한국어로 변경
     result.columns = ["순위", "광고인덱스", "광고코드", "광고명", "광고타입", "광고카테고리", "최종점수"]
     return result
@@ -501,82 +432,18 @@ with st.sidebar:
     st.markdown("---")
     st.caption("💡 대용량 CSV는 최초 로딩에 시간이 필요할 수 있습니다.")
 
-# 파일 업로드 섹션 제거됨 - 확장된 샘플 데이터 자동 사용
-
-# 기본 파일 경로 설정 (현실적인 데이터 우선 사용)
-# 현실적인 데이터 우선, 그 다음 실제 상호작용 데이터, 확장된 샘플, 실제 데이터 기반 샘플, 일반 샘플, 마지막 원본
-if os.path.exists("ads_profile_expanded_sample.zip"):
-    ads_file_path = "ads_profile_expanded_sample.zip"
-elif os.path.exists("ads_profile_real_sample.zip"):
-    ads_file_path = "ads_profile_real_sample.zip"
-elif os.path.exists("ads_profile_sample.zip"):
-    ads_file_path = "ads_profile_sample.zip"
-elif os.path.exists("ads_profile.zip"):
-    ads_file_path = "ads_profile.zip"
-else:
-    st.error("❌ 광고 데이터 파일을 찾을 수 없습니다.")
-    st.stop()
-
-if os.path.exists("user_profile_sample.zip"):
-    users_file_path = "user_profile_sample.zip"
-elif os.path.exists("user_profile_expanded_sample.zip"):
-    users_file_path = "user_profile_expanded_sample.zip"
-elif os.path.exists("user_profile_real_sample.zip"):
-    users_file_path = "user_profile_real_sample.zip"
-elif os.path.exists("user_profile_realistic.zip"):
-    users_file_path = "user_profile_realistic.zip"
-elif os.path.exists("user_profile.zip"):
-    users_file_path = "user_profile.zip"
-else:
-    st.error("❌ 사용자 데이터 파일을 찾을 수 없습니다.")
-    st.stop()
-
-if os.path.exists("correct_interactions_sample.zip"):
-    interactions_file_path = "correct_interactions_sample.zip"
-elif os.path.exists("correct_interactions_expanded_sample.zip"):
-    interactions_file_path = "correct_interactions_expanded_sample.zip"
-elif os.path.exists("correct_interactions_real_sample.zip"):
-    interactions_file_path = "correct_interactions_real_sample.zip"
-elif os.path.exists("correct_interactions_realistic.zip"):
-    interactions_file_path = "correct_interactions_realistic.zip"
-elif os.path.exists("correct_interactions.zip"):
-    interactions_file_path = "correct_interactions.zip"
-else:
-    st.error("❌ 상호작용 데이터 파일을 찾을 수 없습니다.")
-    st.stop()
-
-st.divider()
-
 # 데이터 로드
 try:
-    # 파일 경로 디버깅 정보 (10초 후 자동 사라짐)
-    # 디버깅 정보 제거됨
-    
-    # 데이터 로딩 (조용히)
-    try:
-        A, feat_cols_ads, ads_meta = load_ads(ads_file_path)
-        U, user_ids, id_to_row, feat_cols_user, interaction_info = load_users(users_file_path, feat_cols_ads)
-        user_interactions = load_interactions_from_user_profile(users_file_path)
-        actual_interactions = load_actual_interactions(interactions_file_path, False)
-        detailed_interactions = load_detailed_user_interactions(users_file_path)
-    except Exception as e:
-        st.error(f"❌ 데이터 로드 실패: {e}")
-        st.stop()
-    
-    # 데이터 로딩 완료 (조용히)
-    
+    with st.spinner("광고 데이터 로딩 중..."):
+        A, feat_cols_ads, ads_meta = load_ads("preprocessed/ads_profile.csv")
+    with st.spinner("사용자 데이터 로딩 중..."):
+        U, user_ids, id_to_row, feat_cols_user, interaction_info = load_users("preprocessed/user_profile.csv", feat_cols_ads)
+    with st.spinner("상호작용 데이터 로딩 중..."):
+        user_interactions = load_interactions_from_user_profile("preprocessed/user_profile.csv")
+        actual_interactions = load_actual_interactions()
+        detailed_interactions = load_detailed_user_interactions("preprocessed/user_profile.csv")
 except Exception as e:
-    st.error(f"❌ 데이터 로딩 오류: {e}")
-    st.error("💡 해결 방법:")
-    st.error("1. 파일이 올바른 형식인지 확인하세요 (CSV 또는 ZIP)")
-    st.error("2. 파일 크기가 너무 크지 않은지 확인하세요")
-    st.error("3. 파일을 다시 업로드해보세요")
-    
-    # 디버깅을 위한 상세 오류 정보
-    import traceback
-    st.error("🔍 상세 오류 정보:")
-    st.code(traceback.format_exc())
-    
+    st.error(f"데이터 로딩 오류: {e}")
     st.stop()
 
 # 사용자 선택
@@ -646,12 +513,7 @@ if run:
             st.markdown("**👤 사용자 상호작용 정보**")
             col1, col2, col3, col4 = st.columns(4)
             with col1:
-                # 실제 상호작용 데이터가 있으면 실제 상호작용 수 계산
-                if uid_input in actual_interactions and actual_interactions[uid_input]:
-                    actual_total_interactions = len(actual_interactions[uid_input])
-                    st.metric("총 상호작용", actual_total_interactions)
-                else:
-                    st.metric("총 상호작용", user_info["total_interactions"])
+                st.metric("총 상호작용", user_info["total_interactions"])
             with col2:
                 # 실제 상호작용 데이터가 있으면 실제 고유 광고 수 계산
                 if uid_input in actual_interactions and actual_interactions[uid_input]:
@@ -680,7 +542,7 @@ if run:
             actual_ads = {}
             for interaction in actual_interactions[uid_input]:
                 ads_idx = interaction['ads_idx']
-                # ads_idx로 광고 정보 찾기 (안전한 접근)
+                # ads_idx로 광고 정보 찾기
                 ad_info = ads_meta[ads_meta['ads_idx'] == ads_idx]
                 if len(ad_info) > 0:
                     ad_row = ad_info.iloc[0]
@@ -787,8 +649,8 @@ if run:
                     interacted_ads.append({
                         "광고코드": ad_row["ads_code"],
                         "광고명": ad_row["ads_name"],
-                        "광고타입": get_type_name(ad_row["ads_type"]),
-                        "광고카테고리": get_category_name(ad_row["ads_category"]),
+                        "광고타입": ad_row["ads_type"],
+                        "광고카테고리": ad_row["ads_category"],
                         "상호작용유형": "클릭+전환"
                     })
                 else:
@@ -797,8 +659,8 @@ if run:
                     interacted_ads.append({
                         "광고코드": ad_row["ads_code"],
                         "광고명": ad_row["ads_name"],
-                        "광고타입": get_type_name(ad_row["ads_type"]),
-                        "광고카테고리": get_category_name(ad_row["ads_category"]),
+                        "광고타입": ad_row["ads_type"],
+                        "광고카테고리": ad_row["ads_category"],
                         "상호작용유형": "클릭"
                     })
             
@@ -821,8 +683,8 @@ if run:
                     interacted_ads.append({
                         "광고코드": ad_row["ads_code"],
                         "광고명": ad_row["ads_name"],
-                        "광고타입": get_type_name(ad_row["ads_type"]),
-                        "광고카테고리": get_category_name(ad_row["ads_category"]),
+                        "광고타입": ad_row["ads_type"],
+                        "광고카테고리": ad_row["ads_category"],
                         "상호작용유형": "클릭+전환"
                     })
                 else:
@@ -831,8 +693,8 @@ if run:
                     interacted_ads.append({
                         "광고코드": ad_row["ads_code"],
                         "광고명": ad_row["ads_name"],
-                        "광고타입": get_type_name(ad_row["ads_type"]),
-                        "광고카테고리": get_category_name(ad_row["ads_category"]),
+                        "광고타입": ad_row["ads_type"],
+                        "광고카테고리": ad_row["ads_category"],
                         "상호작용유형": "전환"
                     })
             
@@ -855,23 +717,7 @@ if run:
         
         # 추천된 광고들의 피처 벡터
         rec_ads_idx = rec["광고인덱스"].values
-        
-        # ads_idx를 A 배열의 인덱스로 변환
-        rec_ads_indices = []
-        for ads_idx in rec_ads_idx:
-            # ads_meta에서 해당 ads_idx의 행 인덱스 찾기
-            ad_row_idx = ads_meta[ads_meta['ads_idx'] == ads_idx].index
-            if len(ad_row_idx) > 0:
-                rec_ads_indices.append(ad_row_idx[0])
-            else:
-                st.warning(f"광고 인덱스 {ads_idx}를 찾을 수 없습니다.")
-                continue
-        
-        if rec_ads_indices:
-            rec_ads_features = A[rec_ads_indices]
-        else:
-            st.error("추천된 광고의 피처를 찾을 수 없습니다.")
-            st.stop()
+        rec_ads_features = A[rec_ads_idx]
         
         # 사용자 선호도와 각 추천 광고의 유사도 계산
         similarities = (user_vector @ rec_ads_features.T).flatten()
@@ -1025,5 +871,4 @@ if run:
 
 # 앱 시작 시 압축 파일 해제
 if __name__ == "__main__":
-    # 압축 해제 기능 제거됨 - 압축 파일을 직접 사용
-    pass
+    extract_zip_if_needed()
