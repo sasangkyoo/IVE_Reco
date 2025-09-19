@@ -353,14 +353,21 @@ def load_users(user_csv: str, feat_cols_hint: List[str]):
     
     # 사용자 상호작용 정보 추출 (total_interactions, unique_ads 등)
     interaction_info = {}
-    if "total_interactions" in df.columns and "unique_ads" in df.columns:
+    # 원본 user_profile 컬럼명과 Heavy user profile 컬럼명 모두 지원
+    if ("total_interactions" in df.columns and "unique_ads" in df.columns) or ("total_clicks" in df.columns and "unique_ads_count" in df.columns):
         for _, row in df.iterrows():
             uid = str(row["user_device_id"])
+            # 원본 컬럼명 우선, 없으면 Heavy user profile 컬럼명 사용
+            total_interactions = row.get("total_interactions", row.get("total_clicks", 0))
+            unique_ads = row.get("unique_ads", row.get("unique_ads_count", 0))
+            total_reward_points = row.get("total_reward_points", row.get("total_rewards", 0))
+            avg_dwell_time = row.get("avg_dwell_time", 0)
+            
             interaction_info[uid] = {
-                "total_interactions": int(row.get("total_interactions", 0)),
-                "unique_ads": int(row.get("unique_ads", 0)),
-                "total_reward_points": float(row.get("total_reward_points", 0)),
-                "avg_dwell_time": float(row.get("avg_dwell_time", 0))
+                "total_interactions": int(total_interactions),
+                "unique_ads": int(unique_ads),
+                "total_reward_points": float(total_reward_points),
+                "avg_dwell_time": float(avg_dwell_time)
             }
     
     return U, ids, id_to_row, user_feat_cols, interaction_info
