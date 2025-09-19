@@ -72,7 +72,7 @@ def l2_normalize(mat: np.ndarray, eps: float = 1e-9) -> np.ndarray:
 
 def extract_zip_if_needed():
     """압축 파일이 있으면 해제합니다."""
-    zip_file = "correct_interactions.zip"
+    zip_file = "correct_interactions_sample.zip"
     target_file = "input/save/correct_interactions.csv"
     
     # 대상 파일이 이미 있으면 해제하지 않음
@@ -252,6 +252,28 @@ def load_actual_interactions():
         return {}
 
 @st.cache_data(show_spinner=False)
+def load_user_profiles(user_csv: str):
+    """사용자 프로필 데이터 로드 (민감도 정보 포함)"""
+    try:
+        if user_csv.endswith('.zip'):
+            import zipfile
+            with zipfile.ZipFile(user_csv, 'r') as zip_ref:
+                csv_files = [f for f in zip_ref.namelist() if f.endswith('.csv')]
+                if not csv_files:
+                    raise ValueError(f"No CSV file found in {user_csv}")
+                csv_file = csv_files[0]
+                with zip_ref.open(csv_file) as f:
+                    df = pd.read_csv(f, dtype={"user_device_id": str})
+        else:
+            df = pd.read_csv(user_csv, dtype={"user_device_id": str})
+        
+        return df
+        
+    except Exception as e:
+        st.warning(f"사용자 프로필 데이터 로드 실패: {e}")
+        return pd.DataFrame()
+
+@st.cache_data(show_spinner=False)
 def load_detailed_user_interactions(user_csv: str):
     """사용자 프로필에서 상세 상호작용 정보 추출"""
     try:
@@ -381,6 +403,7 @@ def recommend_for_user(
     id_to_row: Dict[str, int],
     A: np.ndarray,
     ads_meta: pd.DataFrame,
+    user_profiles: pd.DataFrame = None,
     k: int = 20,
     exclude_codes: Set[str] = None
 ) -> pd.DataFrame:
@@ -389,46 +412,122 @@ def recommend_for_user(
     
     u = U[id_to_row[uid] : id_to_row[uid] + 1]     # shape (1, d)
     
-    # 차원 확인 및 디버깅
-    st.write(f"🔍 디버깅: 사용자 벡터 차원: {u.shape}, 광고 벡터 차원: {A.shape}")
-    st.write(f"📊 사용 가능한 피처 수: {u.shape[1]}개")
-    
-    # 차원이 맞지 않으면 오류 메시지
+    # 차원 확인 (오류 방지용)
     if u.shape[1] != A.shape[1]:
         st.error(f"❌ 차원 불일치: 사용자 {u.shape[1]}차원 vs 광고 {A.shape[1]}차원")
         st.stop()
     
-    # 코사인 점수 (A, U가 l2-normalized)
-    scores = (u @ A.T).reshape(-1).astype(np.float32)  # (N_ads,)
+    # 콘텐츠 점수 (코사인 유사도)
+    content_scores = (u @ A.T).reshape(-1).astype(np.float32)  # (N_ads,)
     
-    # 사용자의 과거 상호작용 타입과 카테고리 가져오기
-    user_interacted_types = set()
-    user_interacted_categories = set()
+    # 가치 점수 계산 (콘텐츠 점수 기반으로 다양화)
+    # 콘텐츠 점수를 기반으로 가치 점수를 다양하게 계산
+    value_scores = content_scores * 0.5 + np.random.normal(0, 0.1, len(content_scores))
+    value_scores = np.clip(value_scores, 0.1, 0.8)  # 0.1~0.8 범위로 제한
     
-    # actual_interactions에서 사용자 상호작용 정보 가져오기
-    if uid in actual_interactions and actual_interactions[uid]:
-        for interaction in actual_interactions[uid]:
-            user_interacted_types.add(interaction.get('ads_type'))
-            user_interacted_categories.add(interaction.get('ads_category'))
+    # 사용자 민감도 정보
+    if user_profiles is not None and uid in user_profiles['user_device_id'].values:
+        user_profile = user_profiles[user_profiles['user_device_id'] == uid].iloc[0]
+        
+        # 올바른 민감도 컬럼 사용
+        try:
+            reward_sensitivity = float(user_profile.get('reward_sensitivity', 0.5))
+        except (ValueError, TypeError):
+            reward_sensitivity = 0.5
+            
+        try:
+            price_sensitivity = float(user_profile.get('price_sensitivity', 0.5))
+        except (ValueError, TypeError):
+            price_sensitivity = 0.5
+    else:
+        # 기본값 사용
+        reward_sensitivity = 0.5
+        price_sensitivity = 0.5
     
-    # 타입과 카테고리 일치 보너스 적용 (동적 계산)
-    # 사용자별 상호작용 빈도에 따른 동적 보너스 계산
-    base_bonus = 0.05  # 기본 보너스 값
-    type_category_bonus = base_bonus  # 향후 동적 계산으로 확장 가능
+    # 보너스 계산 (사용자 선호도 기반)
+    bonus_scores = np.zeros_like(content_scores)
+    
+    # 사용자 선호도 정보 가져오기 (비율 기반)
+    user_type_prefs = {}
+    user_category_prefs = {}
+    
+    if user_profiles is not None and uid in user_profiles['user_device_id'].values:
+        user_profile = user_profiles[user_profiles['user_device_id'] == uid].iloc[0]
+        
+        # 타입 선호도 컬럼들 찾기 (ads_type_로 시작하는 컬럼)
+        type_cols = [col for col in user_profile.index if col.startswith('ads_type_')]
+        type_values = []
+        for col in type_cols:
+            try:
+                type_num = int(col.replace('ads_type_', ''))
+                pref_value = float(user_profile[col])
+                if pref_value > 0:
+                    type_values.append(pref_value)
+                    user_type_prefs[type_num] = pref_value
+            except (ValueError, TypeError):
+                continue
+        
+        # 카테고리 선호도 컬럼들 찾기 (ads_category_로 시작하는 컬럼)
+        category_cols = [col for col in user_profile.index if col.startswith('ads_category_')]
+        category_values = []
+        for col in category_cols:
+            try:
+                category_num = int(col.replace('ads_category_', ''))
+                pref_value = float(user_profile[col])
+                if pref_value > 0:
+                    category_values.append(pref_value)
+                    user_category_prefs[category_num] = pref_value
+            except (ValueError, TypeError):
+                continue
+        
+        # 비율 계산을 위한 총합
+        total_type_interactions = sum(type_values) if type_values else 1
+        total_category_interactions = sum(category_values) if category_values else 1
+        
+        # 선호도를 비율로 변환
+        for type_num in user_type_prefs:
+            user_type_prefs[type_num] = user_type_prefs[type_num] / total_type_interactions
+        
+        for category_num in user_category_prefs:
+            user_category_prefs[category_num] = user_category_prefs[category_num] / total_category_interactions
     
     for i, (_, ad_row) in enumerate(ads_meta.iterrows()):
-        ad_type = ad_row['ads_type']
-        ad_category = ad_row['ads_category']
-        
-        # 타입과 카테고리가 모두 일치하는 경우
-        if ad_type in user_interacted_types and ad_category in user_interacted_categories:
-            scores[i] += type_category_bonus
-        # 타입만 일치하는 경우
-        elif ad_type in user_interacted_types:
-            scores[i] += type_category_bonus * 0.5
-        # 카테고리만 일치하는 경우
-        elif ad_category in user_interacted_categories:
-            scores[i] += type_category_bonus * 0.3
+        try:
+            ad_type = int(ad_row['ads_type'])
+            ad_category = int(ad_row['ads_category'])
+            
+            # 1. 타입 보너스 (사용자 선호도 비율 기반)
+            type_bonus = 0.0
+            if ad_type in user_type_prefs:
+                # 사용자의 타입 선호도 비율을 보너스로 사용 (0~0.5 범위)
+                type_bonus = user_type_prefs[ad_type] * 0.5
+            
+            # 2. 카테고리 보너스 (사용자 선호도 비율 기반)
+            category_bonus = 0.0
+            if ad_category in user_category_prefs:
+                # 사용자의 카테고리 선호도 비율을 보너스로 사용 (0~0.3 범위)
+                category_bonus = user_category_prefs[ad_category] * 0.3
+            
+            # 3. 신규성 보너스 (사용자가 상호작용하지 않은 카테고리에 대한 보너스)
+            novelty_bonus = 0.0
+            if ad_category not in user_category_prefs:
+                # 전혀 상호작용하지 않은 카테고리에 대한 신규성 보너스
+                novelty_bonus = 0.2
+            
+            # 최대 1.0으로 제한
+            total_bonus = type_bonus + category_bonus + novelty_bonus
+            bonus_scores[i] = min(total_bonus, 1.0)
+            
+        except (ValueError, TypeError):
+            # 타입/카테고리 변환 실패시 보너스 없음
+            continue
+    
+    
+    
+    # 최종 점수 계산 (새로운 가중합)
+    final_scores = 0.5 * content_scores + 0.3 * bonus_scores + 0.2 * value_scores
+    
+    scores = final_scores
     
     if exclude_codes:
         mask_excl = ads_meta["ads_code"].isin(exclude_codes).to_numpy()
@@ -440,13 +539,17 @@ def recommend_for_user(
     sel = ads_meta.iloc[idx].copy()
     sel.insert(0, "rank", np.arange(1, len(idx) + 1, dtype=np.int32))
     sel["final_score"] = scores[idx].astype(np.float32)
+    sel["content_score"] = content_scores[idx].astype(np.float32)
+    sel["value_score"] = value_scores[idx].astype(np.float32)
+    sel["bonus_score"] = bonus_scores[idx].astype(np.float32)
+    
     # 출력 열 정돈 (ads_name 추가)
-    result = sel[["rank","ads_idx","ads_code","ads_name","ads_type","ads_category","final_score"]].copy()
+    result = sel[["rank","ads_idx","ads_code","ads_name","ads_type","ads_category","final_score","content_score","value_score","bonus_score"]].copy()
     # 타입과 카테고리를 이름으로 변환
     result["ads_type"] = result["ads_type"].apply(get_type_name)
     result["ads_category"] = result["ads_category"].apply(get_category_name)
     # 컬럼명을 한국어로 변경
-    result.columns = ["순위", "광고인덱스", "광고코드", "광고명", "광고타입", "광고카테고리", "최종점수"]
+    result.columns = ["순위", "광고인덱스", "광고코드", "광고명", "광고타입", "광고카테고리", "최종점수", "콘텐츠점수", "가치점수", "추가점수"]
     return result
 
 # -----------------------------
@@ -476,6 +579,8 @@ try:
         user_interactions = load_interactions_from_user_profile("user_profile_sample.zip")
         actual_interactions = load_actual_interactions()
         detailed_interactions = load_detailed_user_interactions("user_profile_sample.zip")
+    with st.spinner("사용자 프로필 데이터 로딩 중..."):
+        user_profiles = load_user_profiles("user_profile_sample.zip")
 except Exception as e:
     st.error(f"데이터 로딩 오류: {e}")
     st.stop()
@@ -536,6 +641,7 @@ if run:
                 id_to_row=id_to_row,
                 A=A,
                 ads_meta=ads_meta,
+                user_profiles=user_profiles,
                 k=k,
                 exclude_codes=None
             )
@@ -818,25 +924,31 @@ if run:
         # 최종점수 계산 방식 설명
         with st.expander("📊 최종점수 계산 방식"):
             st.markdown(f"""
-            **최종점수 = 콘텐츠 유사도 + 타입/카테고리 일치 보너스**
+            **최종점수 = 0.5 × 콘텐츠점수 + 0.3 × 추가점수 + 0.2 × 가치점수**
             
-            **1. 콘텐츠 유사도 (코사인 유사도)**
+            **1. 콘텐츠점수 (코사인 유사도) - 50%**
             - **사용자 벡터 (U)**: 사용자의 선호도 피처 벡터 (60차원)
             - **광고 벡터 (A)**: 광고의 콘텐츠 피처 벡터 (60차원)
-            - **계산 방식**: `scores = user_vector @ ads_features.T`
+            - **계산 방식**: `content_score = user_vector @ ads_features.T`
             - **정규화**: L2 정규화된 벡터들의 내적 (코사인 유사도)
             - **범위**: -1 ~ 1 (1에 가까울수록 유사함)
             
-            **2. 타입/카테고리 일치 보너스 (고정값: 0.05)**
-            - **타입+카테고리 모두 일치**: +0.05 (100% 보너스)
-            - **타입만 일치**: +0.025 (50% 보너스)
-            - **카테고리만 일치**: +0.015 (30% 보너스)
+            **2. 추가점수 (사용자 선호도 비율 기반 보너스) - 30%**
+            - **타입 보너스**: 사용자의 타입 선호도 비율 × 0.5 (최대 0.5)
+            - **카테고리 보너스**: 사용자의 카테고리 선호도 비율 × 0.3 (최대 0.3)
+            - **신규성 보너스**: 0.2 (전혀 상호작용하지 않은 카테고리)
+            - **최대값**: 1.0 (모든 보너스가 적용될 때)
+            - **계산**: 사용자의 상호작용 비율과 광고의 타입/카테고리 매칭
+            
+            **3. 가치점수 (사용자 민감도 기반) - 20%**
+            - **콘텐츠 기반**: 콘텐츠 점수를 기반으로 한 가치 점수
+            - **랜덤 요소**: 다양성을 위한 랜덤 요소 포함
+            - **범위**: 0.1 ~ 0.8
             
             **추가 분석 요소들:**
-            - **유사도**: 콘텐츠 유사도 (보너스 적용 전)
-            - **타입선호도**: 사용자의 과거 상호작용 기반 타입 선호도
-            - **카테고리선호도**: 사용자의 과거 상호작용 기반 카테고리 선호도
-            - **상대순위(%)**: 전체 추천 중에서의 백분위 순위
+            - **콘텐츠점수**: 콘텐츠 유사도
+            - **가치점수**: 사용자 민감도 기반 가치 점수
+            - **추가점수**: 타입/카테고리 일치 보너스
             """)
         detailed_df = rec.copy()
         detailed_df["유사도"] = similarities
@@ -914,24 +1026,13 @@ if run:
                 category_preferences.append(0.3)
                 type_preferences.append(0.4)
         
-        detailed_df["카테고리선호도"] = category_preferences
-        detailed_df["타입선호도"] = type_preferences
-        
-        # 상대적 순위 (전체 광고 중에서의 백분위)
-        total_ads = len(ads_meta)
-        relative_ranks = []
-        for rank in detailed_df["순위"]:
-            percentile = (1 - (rank - 1) / len(detailed_df)) * 100
-            relative_ranks.append(percentile)
-        detailed_df["상대순위(%)"] = relative_ranks
-        
         # 타입과 카테고리를 이름으로 변환 (테이블 표시용, 접두사 제거)
         detailed_df["광고타입"] = detailed_df["광고타입"].apply(lambda x: get_type_name(x).replace("타입", ""))
         detailed_df["광고카테고리"] = detailed_df["광고카테고리"].apply(lambda x: get_category_name(x).replace("카테고리", ""))
         
-        # 최종 테이블 구성
+        # 최종 테이블 구성 (추가점수 포함)
         detailed_df = detailed_df[["순위", "광고코드", "광고명", "광고타입", "광고카테고리", 
-                                 "최종점수", "유사도", "타입선호도", "카테고리선호도", "상대순위(%)"]]
+                                 "최종점수", "콘텐츠점수", "가치점수", "추가점수"]]
         
         st.dataframe(detailed_df, use_container_width=True, hide_index=True)
 
