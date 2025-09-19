@@ -452,7 +452,7 @@ with st.sidebar:
 # 데이터 로드
 try:
     with st.spinner("광고 데이터 로딩 중..."):
-        A, feat_cols_ads, ads_meta = load_ads("../ads_profile.csv")
+        A, feat_cols_ads, ads_meta = load_ads("ads_profile.csv")
     with st.spinner("사용자 데이터 로딩 중..."):
         U, user_ids, id_to_row, feat_cols_user, interaction_info = load_users("user_profile_sample.zip", feat_cols_ads)
     with st.spinner("상호작용 데이터 로딩 중..."):
