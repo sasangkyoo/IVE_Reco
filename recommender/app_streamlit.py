@@ -90,7 +90,17 @@ def extract_zip_if_needed():
 
 @st.cache_data(show_spinner=False)
 def load_ads(ads_csv: str):
-    df = pd.read_csv(ads_csv)
+    if ads_csv.endswith('.zip'):
+        import zipfile
+        with zipfile.ZipFile(ads_csv, 'r') as zip_ref:
+            csv_files = [f for f in zip_ref.namelist() if f.endswith('.csv')]
+            if not csv_files:
+                raise ValueError(f"No CSV file found in {ads_csv}")
+            csv_file = csv_files[0]
+            with zip_ref.open(csv_file) as f:
+                df = pd.read_csv(f)
+    else:
+        df = pd.read_csv(ads_csv)
     feat_cols = infer_feature_cols(df)
     meta_cols = ["ads_idx", "ads_code", "ads_type", "ads_category", "ads_name"]
     for c in meta_cols:
@@ -452,7 +462,7 @@ with st.sidebar:
 # 데이터 로드
 try:
     with st.spinner("광고 데이터 로딩 중..."):
-        A, feat_cols_ads, ads_meta = load_ads("../ads_profile.csv")
+        A, feat_cols_ads, ads_meta = load_ads("ads_profile_expanded_sample.zip")
     with st.spinner("사용자 데이터 로딩 중..."):
         U, user_ids, id_to_row, feat_cols_user, interaction_info = load_users("user_profile_sample.zip", feat_cols_ads)
     with st.spinner("상호작용 데이터 로딩 중..."):
