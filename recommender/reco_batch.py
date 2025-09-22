@@ -30,6 +30,7 @@ from collections import defaultdict
 import math
 import warnings
 warnings.filterwarnings('ignore')
+from ads_filter import filter_ads_for_recommendation
 
 # 타입과 카테고리 매핑 정의
 TYPE_MAPPING = {
@@ -450,7 +451,14 @@ class BatchRecommender:
         print(f"광고 프로필 로딩: {self.ads_csv}")
         self.ads_profiles = pd.read_csv(self.ads_csv, dtype={'ads_idx': 'int32'})
         self.ads_profiles["ads_idx"] = pd.to_numeric(self.ads_profiles["ads_idx"], errors="coerce").astype("Int64")
-        print(f"광고 수: {len(self.ads_profiles):,}개")
+        print(f"원본 광고 수: {len(self.ads_profiles):,}개")
+        
+        # 광고 필터링 적용 (날짜 및 재참여 타입)
+        print("광고 필터링 적용 중...")
+        filtered_ads, filter_stats = filter_ads_for_recommendation(self.ads_profiles)
+        self.ads_profiles = filtered_ads
+        print(f"필터링된 광고 수: {len(self.ads_profiles):,}개 ({filter_stats['filtered_ratio']}%)")
+        print(f"제거된 광고 수: {filter_stats['removed_ads']:,}개")
         
         # ads_idx 인덱스 생성 (빠른 조회용)
         self.ads_idx_to_row = pd.Series(np.arange(len(self.ads_profiles), dtype=np.int32), index=self.ads_profiles["ads_idx"]).to_dict()

@@ -8,6 +8,7 @@ from typing import List, Dict, Set
 import numpy as np
 import pandas as pd
 import streamlit as st
+from ads_filter import filter_ads_for_recommendation
 
 # 타입과 카테고리 매핑 정의
 TYPE_MAPPING = {
@@ -405,20 +406,41 @@ def recommend_for_user(
     ads_meta: pd.DataFrame,
     user_profiles: pd.DataFrame = None,
     k: int = 20,
-    exclude_codes: Set[str] = None
+    exclude_codes: Set[str] = None,
+    user_interactions: pd.DataFrame = None
 ) -> pd.DataFrame:
     if uid not in id_to_row:
         raise KeyError(f"사용자 '{uid}'를 찾을 수 없습니다.")
     
+    # 광고 필터링 적용 (날짜 필터링은 항상 적용)
+    filtered_ads_meta, filter_stats = filter_ads_for_recommendation(
+        ads_meta, user_interactions, uid
+    )
+    
+    # 필터링된 광고가 없으면 빈 결과 반환
+    if filtered_ads_meta.empty:
+        return pd.DataFrame(columns=['ads_idx', 'ads_name', 'ads_type', 'ads_category', 'final_score'])
+    
+    # 필터링된 광고의 인덱스만 사용
+    valid_ads_indices = filtered_ads_meta['ads_idx'].values
+    ads_mask = ads_meta['ads_idx'].isin(valid_ads_indices)
+    
+    # A 행렬과 ads_meta를 필터링된 광고만으로 제한
+    A_filtered = A[ads_mask]
+    ads_meta_filtered = ads_meta[ads_mask].reset_index(drop=True)
+    
+    # 필터링 메시지 숨김 (필요시 주석 해제)
+    # st.info(f"🔍 광고 필터링: {filter_stats['total_ads']}개 → {filter_stats['filtered_ads']}개 ({filter_stats['filtered_ratio']}%)")
+    
     u = U[id_to_row[uid] : id_to_row[uid] + 1]     # shape (1, d)
     
     # 차원 확인 (오류 방지용)
-    if u.shape[1] != A.shape[1]:
-        st.error(f"❌ 차원 불일치: 사용자 {u.shape[1]}차원 vs 광고 {A.shape[1]}차원")
+    if u.shape[1] != A_filtered.shape[1]:
+        st.error(f"❌ 차원 불일치: 사용자 {u.shape[1]}차원 vs 광고 {A_filtered.shape[1]}차원")
         st.stop()
     
     # 콘텐츠 점수 (코사인 유사도)
-    content_scores = (u @ A.T).reshape(-1).astype(np.float32)  # (N_ads,)
+    content_scores = (u @ A_filtered.T).reshape(-1).astype(np.float32)  # (N_ads,)
     
     # 가치 점수 계산 (콘텐츠 점수 기반으로 다양화)
     # 콘텐츠 점수를 기반으로 가치 점수를 다양하게 계산
@@ -530,13 +552,13 @@ def recommend_for_user(
     scores = final_scores
     
     if exclude_codes:
-        mask_excl = ads_meta["ads_code"].isin(exclude_codes).to_numpy()
+        mask_excl = ads_meta_filtered["ads_code"].isin(exclude_codes).to_numpy()
         scores[mask_excl] = -np.inf
     
     take = min(k, scores.shape[0])
     idx = np.argpartition(scores, -take)[-take:]
     idx = idx[np.argsort(-scores[idx])]
-    sel = ads_meta.iloc[idx].copy()
+    sel = ads_meta_filtered.iloc[idx].copy()
     sel.insert(0, "rank", np.arange(1, len(idx) + 1, dtype=np.int32))
     sel["final_score"] = scores[idx].astype(np.float32)
     sel["content_score"] = content_scores[idx].astype(np.float32)
@@ -643,7 +665,8 @@ if run:
                 ads_meta=ads_meta,
                 user_profiles=user_profiles,
                 k=k,
-                exclude_codes=None
+                exclude_codes=None,
+                user_interactions=user_interactions
             )
         st.success(f"✅ 사용자 {uid_input}에 대한 Top-{k} 추천 결과")
         
