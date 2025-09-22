@@ -547,7 +547,7 @@ def recommend_for_user(
     
     
     # 최종 점수 계산 (새로운 가중합)
-    final_scores = 0.5 * content_scores + 0.3 * bonus_scores + 0.2 * value_scores
+    final_scores = 0.5 * content_scores + 0.4 * bonus_scores + 0.1 * value_scores
     
     scores = final_scores
     

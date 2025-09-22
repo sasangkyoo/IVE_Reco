@@ -1089,8 +1089,7 @@ class BatchRecommender:
                 novelty_bonus = np.clip(0.02 * (1 - exposure), 0.0, 1.0)
                 
                 # 최종 스코어
-                final_score = np.clip(0.6 * content_score + 0.4 * value_score + 
-                                    type_bonus + cat_bonus + novelty_bonus, 0.0, 1.0)
+                final_score = np.clip(0.5 * content_score + 0.4 * (type_bonus + cat_bonus + novelty_bonus) + 0.1 * value_score, 0.0, 1.0)
                 
                 # 상세 정보 저장
                 score_details = {
